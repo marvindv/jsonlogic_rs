@@ -2,14 +2,13 @@ extern crate serde_json;
 
 use serde_json::Value;
 
-mod computation;
 mod expression;
 mod operator;
 mod operators;
 
 pub fn apply(json_logic: &Value) -> Result<Value, String> {
     let ast = expression::Expression::from_json(json_logic)?;
-    Ok(computation::compute_expression(&ast))
+    Ok(ast.compute())
 }
 
 pub fn get_variable_names(json_logic: &Value) -> Result<std::collections::HashSet<String>, String> {

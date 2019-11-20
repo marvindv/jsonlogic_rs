@@ -1,3 +1,6 @@
+use crate::operators;
+use serde_json::Value;
+
 /// Represents a JsonLogic operator.
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Operator {
@@ -30,6 +33,18 @@ impl Operator {
             "!" => Some(Operator::Negation),
             "!!" => Some(Operator::DoubleNegation),
             _ => None,
+        }
+    }
+
+    pub fn compute(&self, args: &Vec<Value>) -> Value {
+        match self {
+            Operator::Equal => Value::Bool(operators::compute_equality(&args)),
+            Operator::NotEqual => Value::Bool(operators::compute_not_equal(&args)),
+            Operator::StrictEqual => Value::Bool(operators::compute_strict_equality(&args)),
+            Operator::StrictNotEqual => Value::Bool(operators::compute_strict_not_equal(&args)),
+            Operator::Negation => Value::Bool(operators::compute_negation(&args)),
+            Operator::DoubleNegation => Value::Bool(operators::compute_double_negation(&args)),
+            Operator::Variable => unimplemented!(),
         }
     }
 }

@@ -37,6 +37,17 @@ impl<'a> Expression<'a> {
         Ok(Expression::Computed(operator, arguments))
     }
 
+    /// Computes the expression and returns value it evaluates to.
+    pub fn compute(&self) -> Value {
+        match self {
+            Expression::Constant(value) => (*value).clone(),
+            Expression::Computed(operator, args) => {
+                let args = args.iter().map(|arg| arg.compute()).collect();
+                operator.compute(&args)
+            }
+        }
+    }
+
     /// Returns a set that contains all variable names that occure in this expression and its child
     /// expressions. Errors if a variable operator
     ///
@@ -237,5 +248,39 @@ mod tests {
                 .cloned()
                 .collect::<HashSet<_>>())
         );
+    }
+
+    mod compute {
+        use super::*;
+
+        #[test]
+        fn constant_expression() {
+            assert_eq!(Constant(&json!(1)).compute(), json!(1));
+        }
+
+        #[test]
+        fn equal() {
+            assert_eq!(Computed(Operator::Equal, vec![]).compute(), json!(true));
+            assert_eq!(
+                Computed(Operator::Equal, vec![Constant(&json!(null))]).compute(),
+                json!(true)
+            );
+            assert_eq!(
+                Computed(
+                    Operator::Equal,
+                    vec![Constant(&json!(1)), Constant(&json!(1))]
+                )
+                .compute(),
+                json!(true)
+            );
+            assert_eq!(
+                Computed(
+                    Operator::Equal,
+                    vec![Constant(&json!(1)), Constant(&json!(2))]
+                )
+                .compute(),
+                json!(false)
+            );
+        }
     }
 }
