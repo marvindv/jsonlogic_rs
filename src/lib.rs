@@ -18,24 +18,6 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn truthy_values() {
-        // See http://jsonlogic.com/truthy.html
-        assert_eq!(operators::truthy(&json!(0)), false);
-        assert_eq!(operators::truthy(&json!(-1)), true);
-        assert_eq!(operators::truthy(&json!(1)), true);
-        assert_eq!(operators::truthy(&json!([])), false);
-        assert_eq!(operators::truthy(&json!([1, 2])), true);
-        assert_eq!(operators::truthy(&json!("")), false);
-        assert_eq!(operators::truthy(&json!("anything")), true);
-        assert_eq!(operators::truthy(&json!("0")), true);
-        assert_eq!(operators::truthy(&Value::Null), false);
-
-        assert_eq!(operators::truthy(&json!({})), true);
-        assert_eq!(operators::truthy(&json!(true)), true);
-        assert_eq!(operators::truthy(&json!(false)), false);
-    }
-
-    #[test]
     fn simple_values() {
         let num = json!(1);
         assert_eq!(apply(&num), Ok(num));
