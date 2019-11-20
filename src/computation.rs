@@ -1,4 +1,5 @@
 use crate::expression::Expression;
+use crate::operator::Operator;
 use crate::operators;
 use serde_json::Value;
 
@@ -9,31 +10,19 @@ pub fn compute_expression(expr: &Expression) -> Value {
 
     match expr {
         Expression::Constant(value) => (*value).clone(),
-        Expression::Equal(args) => {
+        Expression::Computed(operator, args) => {
             let args = compute_arguments(&args);
-            Value::Bool(operators::compute_equality(&args))
+
+            match operator {
+                Operator::Equal => Value::Bool(operators::compute_equality(&args)),
+                Operator::NotEqual => Value::Bool(operators::compute_not_equal(&args)),
+                Operator::StrictEqual => Value::Bool(operators::compute_strict_equality(&args)),
+                Operator::StrictNotEqual => Value::Bool(operators::compute_strict_not_equal(&args)),
+                Operator::Negation => Value::Bool(operators::compute_negation(&args)),
+                Operator::DoubleNegation => Value::Bool(operators::compute_double_negation(&args)),
+                Operator::Variable => unimplemented!(),
+            }
         }
-        Expression::NotEqual(args) => {
-            let args = compute_arguments(&args);
-            Value::Bool(operators::compute_not_equal(&args))
-        }
-        Expression::StrictEqual(args) => {
-            let args = compute_arguments(&args);
-            Value::Bool(operators::compute_strict_equality(&args))
-        }
-        Expression::StrictNotEqual(args) => {
-            let args = compute_arguments(&args);
-            Value::Bool(operators::compute_strict_not_equal(&args))
-        }
-        Expression::Negation(args) => {
-            let args = compute_arguments(&args);
-            Value::Bool(operators::compute_negation(&args))
-        }
-        Expression::DoubleNegation(args) => {
-            let args = compute_arguments(&args);
-            Value::Bool(operators::compute_double_negation(&args))
-        }
-        Expression::Variable(_) => unimplemented!(),
     }
 }
 
@@ -54,17 +43,26 @@ mod tests {
 
     #[test]
     fn equal() {
-        assert_eq!(compute_expression(&Equal(vec![])), json!(true));
         assert_eq!(
-            compute_expression(&Equal(vec![Constant(&json!(null))])),
+            compute_expression(&Computed(Operator::Equal, vec![])),
             json!(true)
         );
         assert_eq!(
-            compute_expression(&Equal(vec![Constant(&json!(1)), Constant(&json!(1))])),
+            compute_expression(&Computed(Operator::Equal, vec![Constant(&json!(null))])),
             json!(true)
         );
         assert_eq!(
-            compute_expression(&Equal(vec![Constant(&json!(1)), Constant(&json!(2))])),
+            compute_expression(&Computed(
+                Operator::Equal,
+                vec![Constant(&json!(1)), Constant(&json!(1))]
+            )),
+            json!(true)
+        );
+        assert_eq!(
+            compute_expression(&Computed(
+                Operator::Equal,
+                vec![Constant(&json!(1)), Constant(&json!(2))]
+            )),
             json!(false)
         );
     }

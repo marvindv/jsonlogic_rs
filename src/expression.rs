@@ -36,14 +36,8 @@ use serde_json::Value;
 
 #[derive(Debug, PartialEq)]
 pub enum Expression<'a> {
-    Equal(Vec<Expression<'a>>),
-    NotEqual(Vec<Expression<'a>>),
-    StrictEqual(Vec<Expression<'a>>),
-    StrictNotEqual(Vec<Expression<'a>>),
     Constant(&'a Value),
-    Variable(Vec<Expression<'a>>),
-    Negation(Vec<Expression<'a>>),
-    DoubleNegation(Vec<Expression<'a>>),
+    Computed(Operator, Vec<Expression<'a>>),
 }
 
 impl<'a> Expression<'a> {
@@ -72,15 +66,7 @@ impl<'a> Expression<'a> {
             _ => Expression::from_json(value).and_then(|expr| Ok(vec![expr])),
         }?;
 
-        match operator {
-            Operator::Equality => Ok(Expression::Equal(arguments)),
-            Operator::NotEqual => Ok(Expression::NotEqual(arguments)),
-            Operator::StrictEquality => Ok(Expression::StrictEqual(arguments)),
-            Operator::StrictNotEqual => Ok(Expression::StrictNotEqual(arguments)),
-            Operator::Variable => Ok(Expression::Variable(arguments)),
-            Operator::Negation => Ok(Expression::Negation(arguments)),
-            Operator::DoubleNegation => Ok(Expression::DoubleNegation(arguments)),
-        }
+        Ok(Expression::Computed(operator, arguments))
     }
 }
 
@@ -94,40 +80,49 @@ mod tests {
     fn parse_to_ast() {
         assert_eq!(
             Expression::from_json(&json!({ "==": null })).unwrap(),
-            Equal(vec![])
+            Expression::Computed(Operator::Equal, vec![])
         );
 
         assert_eq!(
             Expression::from_json(&json!({ "==": [] })).unwrap(),
-            Equal(vec![])
+            Expression::Computed(Operator::Equal, vec![])
         );
 
         assert_eq!(
             Expression::from_json(&json!({ "==": [1] })).unwrap(),
-            Equal(vec![Constant(&json!(1))])
+            Expression::Computed(Operator::Equal, vec![Constant(&json!(1))])
         );
 
         assert_eq!(
             Expression::from_json(&json!({ "==": [1, 2] })).unwrap(),
-            Equal(vec![Constant(&json!(1)), Constant(&json!(2))])
+            Expression::Computed(
+                Operator::Equal,
+                vec![Constant(&json!(1)), Constant(&json!(2))]
+            )
         );
 
         assert_eq!(
             Expression::from_json(&json!({"!=": [5, 2]})).unwrap(),
-            Expression::NotEqual(vec![Constant(&json!(5)), Constant(&json!(2))])
+            Expression::Computed(
+                Operator::NotEqual,
+                vec![Constant(&json!(5)), Constant(&json!(2))]
+            )
         );
 
         assert_eq!(
             Expression::from_json(&json!({"var": ["foo"]})).unwrap(),
-            Expression::Variable(vec![Constant(&json!("foo"))])
+            Expression::Computed(Operator::Variable, vec![Constant(&json!("foo"))])
         );
 
         assert_eq!(
             Expression::from_json(&json!({"==": [{"var": ["foo"]}, "foo"]})).unwrap(),
-            Equal(vec![
-                Variable(vec![Constant(&json!("foo"))]),
-                Constant(&json!("foo"))
-            ])
+            Expression::Computed(
+                Operator::Equal,
+                vec![
+                    Expression::Computed(Operator::Variable, vec![Constant(&json!("foo"))]),
+                    Expression::Constant(&json!("foo"))
+                ]
+            )
         );
     }
 }

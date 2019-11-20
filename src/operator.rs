@@ -2,9 +2,9 @@
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Operator {
     /// Tests equality, with type coercion. Requires two arguments.
-    Equality,
+    Equal,
     /// Tests strict equality. Requires two arguments.
-    StrictEquality,
+    StrictEqual,
     /// Tests not-equal, with type coercion.
     NotEqual,
     /// Tests strict not-equal.
@@ -22,8 +22,8 @@ impl Operator {
     /// string matches no known operator.
     pub fn from_str(s: &str) -> Option<Operator> {
         match s {
-            "==" => Some(Operator::Equality),
-            "===" => Some(Operator::StrictEquality),
+            "==" => Some(Operator::Equal),
+            "===" => Some(Operator::StrictEqual),
             "!=" => Some(Operator::NotEqual),
             "!==" => Some(Operator::StrictNotEqual),
             "var" => Some(Operator::Variable),
