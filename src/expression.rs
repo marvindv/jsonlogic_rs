@@ -1,38 +1,6 @@
-//! {"==": [1]}
-//!     Equal (
-//!         Constant(1)
-//!     )
-//!
-//! {"==": [1, 2]}
-//!     Equal (
-//!         Constant(1),
-//!         Constant(2)
-//!     )
-//!
-//! {"===": null}, {"===": []}
-//!     StrictEqual (
-//!     )
-//!
-//! {"var": ["foo", 5]}
-//!     Variable(
-//!         "foo",
-//!         5
-//!     )
-//!
-//! {"var": "foo"}
-//!     Variable(
-//!         "foo"
-//!     )
-//!
-//! {"!=": [ {"var": "foo"}, "bar" ]}
-//!     NotEqual (
-//!         Variable("foo"),
-//!         Constant("bar")
-//!     )
-//!
-
 use crate::operator::Operator;
 use serde_json::Value;
+use std::collections::HashSet;
 
 #[derive(Debug, PartialEq)]
 pub enum Expression<'a> {
@@ -67,6 +35,50 @@ impl<'a> Expression<'a> {
         }?;
 
         Ok(Expression::Computed(operator, arguments))
+    }
+
+    /// Returns a set that contains all variable names that occure in this expression and its child
+    /// expressions. Errors if a variable operator
+    ///
+    /// - has not a string as its argument (TODO: numbers are ok for when data is an array)
+    /// - has a non static argument
+    ///
+    /// While the latter is valid for computation, it is currently not implemented to analyze the
+    /// variable name for that.
+    pub fn get_variable_names(&self) -> Result<HashSet<String>, String> {
+        let mut variable_names: HashSet<String> = HashSet::new();
+
+        self.insert_var_names(&mut variable_names)?;
+        Ok(variable_names)
+    }
+
+    fn insert_var_names(&self, names: &mut HashSet<String>) -> Result<(), String> {
+        match self {
+            Expression::Constant(_) => Ok(()),
+            Expression::Computed(operator, args) => {
+                if let Operator::Variable = operator {
+                    let first_expr = args
+                        .get(0)
+                        .ok_or("found Variable operator without arguments")?;
+                    if let Expression::Constant(name_value) = first_expr {
+                        let name = name_value
+                            .as_str()
+                            .ok_or("found Variable operator with non string argument")?;
+                        names.insert(name.to_owned());
+                        return Ok(());
+                    } else {
+                        return Err(String::from(
+                            "found Variable operator with non static argument",
+                        ));
+                    }
+                }
+
+                // For all other operations analyze the arguments recursive.
+                args.iter()
+                    .map(|expr| expr.insert_var_names(names))
+                    .collect()
+            }
+        }
     }
 }
 
@@ -123,6 +135,107 @@ mod tests {
                     Expression::Constant(&json!("foo"))
                 ]
             )
+        );
+    }
+
+    #[test]
+    fn get_variable_names_error() {
+        assert_eq!(
+            Expression::Computed(
+                Operator::Variable,
+                vec![Expression::Computed(
+                    Operator::Variable,
+                    vec![Expression::Constant(&json!("foo"))]
+                )]
+            )
+            .get_variable_names(),
+            Err(String::from(
+                "found Variable operator with non static argument"
+            ))
+        );
+
+        assert_eq!(
+            Expression::Computed(Operator::Variable, vec![Expression::Constant(&json!(1))])
+                .get_variable_names(),
+            Err(String::from(
+                "found Variable operator with non string argument"
+            ))
+        );
+
+        assert_eq!(
+            Expression::Computed(Operator::Variable, vec![]).get_variable_names(),
+            Err(String::from("found Variable operator without arguments"))
+        );
+    }
+
+    #[test]
+    fn get_variable_names() {
+        assert_eq!(
+            Expression::Constant(&json!("foo")).get_variable_names(),
+            Ok(HashSet::new())
+        );
+
+        assert_eq!(
+            Expression::Computed(
+                Operator::Variable,
+                vec![Expression::Constant(&json!("foo"))]
+            )
+            .get_variable_names(),
+            Ok(["foo".to_owned()].iter().cloned().collect::<HashSet<_>>())
+        );
+
+        assert_eq!(
+            Expression::Computed(
+                Operator::Equal,
+                vec![
+                    Expression::Constant(&json!("a value")),
+                    Expression::Computed(
+                        Operator::Variable,
+                        vec![Expression::Constant(&json!("foo"))]
+                    )
+                ]
+            )
+            .get_variable_names(),
+            Ok(["foo".to_owned()].iter().cloned().collect::<HashSet<_>>())
+        );
+
+        assert_eq!(
+            Expression::Computed(
+                Operator::Equal,
+                vec![
+                    Expression::Computed(
+                        Operator::Variable,
+                        vec![Expression::Constant(&json!("foo"))]
+                    ),
+                    Expression::Computed(
+                        Operator::Variable,
+                        vec![Expression::Constant(&json!("foo"))]
+                    )
+                ]
+            )
+            .get_variable_names(),
+            Ok(["foo".to_owned()].iter().cloned().collect::<HashSet<_>>())
+        );
+
+        assert_eq!(
+            Expression::Computed(
+                Operator::Equal,
+                vec![
+                    Expression::Computed(
+                        Operator::Variable,
+                        vec![Expression::Constant(&json!("bar"))]
+                    ),
+                    Expression::Computed(
+                        Operator::Variable,
+                        vec![Expression::Constant(&json!("foo"))]
+                    )
+                ]
+            )
+            .get_variable_names(),
+            Ok(["foo".to_owned(), "bar".to_owned()]
+                .iter()
+                .cloned()
+                .collect::<HashSet<_>>())
         );
     }
 }

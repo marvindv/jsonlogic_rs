@@ -7,15 +7,21 @@ mod expression;
 mod operator;
 mod operators;
 
-pub fn apply(json: &Value) -> Result<Value, String> {
-    let ast = expression::Expression::from_json(json)?;
+pub fn apply(json_logic: &Value) -> Result<Value, String> {
+    let ast = expression::Expression::from_json(json_logic)?;
     Ok(computation::compute_expression(&ast))
+}
+
+pub fn get_variable_names(json_logic: &Value) -> Result<std::collections::HashSet<String>, String> {
+    let ast = expression::Expression::from_json(json_logic)?;
+    ast.get_variable_names()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use serde_json::json;
+    use std::collections::HashSet;
 
     #[test]
     fn simple_values() {
@@ -27,6 +33,16 @@ mod tests {
 
         let boolean = json!(true);
         assert_eq!(apply(&boolean), Ok(boolean));
+    }
+
+    #[test]
+    fn var_names() {
+        let json_logic = json!({ "!==": [{ "var": "foo" }, { "var": ["bar", 5] }] });
+        let names: HashSet<_> = [String::from("foo"), String::from("bar")]
+            .iter()
+            .cloned()
+            .collect();
+        assert_eq!(get_variable_names(&json_logic).unwrap(), names);
     }
 
     // ==
