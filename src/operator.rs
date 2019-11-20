@@ -11,6 +11,10 @@ pub enum Operator {
     StrictNotEqual,
     /// Retrieve data from the provided data object.
     Variable,
+    /// Logical negation (“not”). Takes just one argument.
+    Negation,
+    /// Double negation, or “cast to a boolean.” Takes a single argument.
+    DoubleNegation,
 }
 
 impl Operator {
@@ -23,6 +27,8 @@ impl Operator {
             "!=" => Some(Operator::NotEqual),
             "!==" => Some(Operator::StrictNotEqual),
             "var" => Some(Operator::Variable),
+            "!" => Some(Operator::Negation),
+            "!!" => Some(Operator::DoubleNegation),
             _ => None,
         }
     }

@@ -25,7 +25,15 @@ pub fn compute_expression(expr: &Expression) -> Value {
             let args = compute_arguments(&args);
             Value::Bool(operators::compute_strict_not_equal(&args))
         }
-        _ => unimplemented!(),
+        Expression::Negation(args) => {
+            let args = compute_arguments(&args);
+            Value::Bool(operators::compute_negation(&args))
+        }
+        Expression::DoubleNegation(args) => {
+            let args = compute_arguments(&args);
+            Value::Bool(operators::compute_double_negation(&args))
+        }
+        Expression::Variable(_) => unimplemented!(),
     }
 }
 
@@ -60,4 +68,6 @@ mod tests {
             json!(false)
         );
     }
+
+    // TODO: Add more or rely on the tests in the operator source files?
 }

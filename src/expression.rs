@@ -42,6 +42,8 @@ pub enum Expression<'a> {
     StrictNotEqual(Vec<Expression<'a>>),
     Constant(&'a Value),
     Variable(Vec<Expression<'a>>),
+    Negation(Vec<Expression<'a>>),
+    DoubleNegation(Vec<Expression<'a>>),
 }
 
 impl<'a> Expression<'a> {
@@ -76,6 +78,8 @@ impl<'a> Expression<'a> {
             Operator::StrictEquality => Ok(Expression::StrictEqual(arguments)),
             Operator::StrictNotEqual => Ok(Expression::StrictNotEqual(arguments)),
             Operator::Variable => Ok(Expression::Variable(arguments)),
+            Operator::Negation => Ok(Expression::Negation(arguments)),
+            Operator::DoubleNegation => Ok(Expression::DoubleNegation(arguments)),
         }
     }
 }
