@@ -1,23 +1,10 @@
-use serde_json::{Number, Value};
+use serde_json::{json, Number, Value};
 
-pub fn compute_equality(arguments: &Value) -> Result<Value, String> {
-    // Return true if the argument is null. Return false if the arguments are not are not null or
-    // an array. This replicates the behaviour of the javascript implementation.
-    if arguments.is_null() {
-        return Ok(Value::Bool(true));
-    }
+pub fn compute_equality(args: &Vec<Value>) -> bool {
+    let a = args.get(0).unwrap_or_else(|| &json!(null));
+    let b = args.get(1).unwrap_or_else(|| &json!(null));
 
-    let arr = match arguments.as_array() {
-        Some(arr) => arr,
-        None => return Ok(Value::Bool(false)),
-    };
-
-    // Requires two arguments. More arguments are ignored. Non existing arguments default to null.
-    // TODO: We are the type annotations needed for code completion.
-    let first: &Value = arr.get(0).unwrap_or_else(|| &Value::Null);
-    let second: &Value = arr.get(1).unwrap_or_else(|| &Value::Null);
-
-    return Ok(Value::Bool(is_loose_equal(first, second)));
+    return is_loose_equal(&a, &b);
 }
 
 // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness

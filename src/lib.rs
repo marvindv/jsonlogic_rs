@@ -2,77 +2,14 @@ extern crate serde_json;
 
 use serde_json::Value;
 
+mod computation;
+mod expression;
+mod operator;
 mod operators;
 
-enum Operator {
-    /// Tests equality, with type coercion. Requires two arguments.
-    Equality,
-    /// Tests strict equality. Requires two arguments.
-    StrictEquality,
-    /// Tests not-equal, with type coercion.
-    NotEqual,
-    /// Tests strict not-equal.
-    StrictNotEqual,
-}
-
-impl Operator {
-    /// Returns the Operator matching the given string representation. Returns None if the given
-    /// string matches no known operator.
-    fn from_str(s: &str) -> Option<Operator> {
-        match s {
-            "==" => Some(Operator::Equality),
-            "===" => Some(Operator::StrictEquality),
-            "!=" => Some(Operator::NotEqual),
-            "!==" => Some(Operator::StrictNotEqual),
-            _ => None,
-        }
-    }
-}
-
-fn compute_double_negation(argument: &Value) -> Result<Value, String> {
-    unimplemented!();
-}
-
-pub fn apply(json: &serde_json::Value) -> Result<serde_json::Value, String> {
-    if !json.is_object() {
-        // Return simple values.
-        // TODO: Avoid cloning if possible.
-        return Ok(json.clone());
-    }
-
-    let object = match json.as_object() {
-        Some(v) => v,
-        None => unreachable!(),
-    };
-
-    // If this object has more than one key-value pair, we will return it as is. This replicates the
-    // behaviour of the javascript implementation.
-    if object.len() != 1 {
-        // TODO: Avoid cloning if possible.
-        return Ok(json.clone());
-    }
-
-    let entry: Vec<(&String, &serde_json::Value)> = object.iter().collect();
-
-    let &(operator_key, value) = match entry.get(0) {
-        Some(v) => v,
-        None => unreachable!(),
-    };
-    let operator = match Operator::from_str(operator_key) {
-        Some(o) => o,
-        None => return Err(format!("Unrecognized operation {}", operator_key)),
-    };
-
-    // TODO: To allow nested expressions, process all values here and pass them as an array to the
-    // operators as an vector.
-
-    match operator {
-        Operator::Equality => operators::compute_equality(value),
-        Operator::NotEqual => operators::compute_not_equal(value),
-        Operator::StrictEquality => operators::compute_strict_equality(value),
-        Operator::StrictNotEqual => operators::compute_strict_not_equal(value),
-        _ => panic!("Not implemented"),
-    }
+pub fn apply(json: &Value) -> Result<Value, String> {
+    let ast = expression::Expression::from_json(json)?;
+    Ok(computation::compute_expression(&ast))
 }
 
 #[cfg(test)]
