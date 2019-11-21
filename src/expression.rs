@@ -1,4 +1,4 @@
-use crate::operator::Operator;
+use crate::operators::Operator;
 use serde_json::Value;
 use std::collections::HashSet;
 

@@ -3,7 +3,6 @@ extern crate serde_json;
 use serde_json::Value;
 
 mod expression;
-mod operator;
 mod operators;
 
 pub fn apply(json_logic: &Value) -> Result<Value, String> {
