@@ -8,17 +8,17 @@ pub fn compute_variable(args: &Vec<Value>, data: &Value) -> Value {
     let value = match arg {
         // Return the complete data, like in the js implementation.
         Value::Null => data.clone(),
-        Value::String(s) => match data {
-            Value::Object(_) => from_object_by_str(s, data),
-            // Try to interpret the string as an index in the given array. If that is not
-            // possible return Null.
-            Value::Array(_) => s
+        Value::String(arg) => match data {
+            Value::Object(_) => from_object_by_str(arg, data),
+            // Try to interpret the string argument we got as an index in the given array or string
+            // data. If that is not possible return Null.
+            Value::Array(_) | Value::String(_) => arg
                 .parse::<usize>()
                 .map(|index| from_data_by_index(index, data))
                 .unwrap_or(Value::Null),
             _ => Value::Null,
         },
-        Value::Number(num) => num
+        Value::Number(arg) => arg
             .as_u64()
             .and_then(|index| usize::try_from(index).ok())
             .map(|index| from_data_by_index(index, data))
@@ -57,12 +57,21 @@ fn from_object_by_str(accessor: &String, data: &Value) -> Value {
     data_part.clone()
 }
 
-/// Extracts a value from the given data by index. Data can either be an array or an object
-/// containing the stringified index as a key. Otherwise returns `Value::Null`.
+/// Extracts a value from the given data by index. Data can either be an array, a string or an
+/// object containing the stringified index as a key. Otherwise returns `Value::Null`.
 fn from_data_by_index(index: usize, data: &Value) -> Value {
     match data {
+        // Get the element at the given index or Null if there is none.
         Value::Array(arr) => arr.get(index).cloned().unwrap_or(Value::Null),
+        // Get the value associated to the key stringified index or Null if there is none.
         Value::Object(obj) => obj.get(&index.to_string()).cloned().unwrap_or(Value::Null),
+        // Get the n-th character from the string (where n is index) or Null if the string is not
+        // long enough.
+        Value::String(s) => s
+            .chars()
+            .nth(index)
+            .map(|ch| Value::String(ch.to_string()))
+            .unwrap_or(Value::Null),
         _ => Value::Null,
     }
 }
@@ -95,6 +104,13 @@ mod tests {
             json!(6)
         );
         assert_eq!(compute_variable(&vec![json!(1)], &data), json!(1337));
+    }
+
+    #[test]
+    fn data_is_string() {
+        let data = json!("abcderfg");
+        assert_eq!(compute_variable(&vec![json!(1)], &data), json!("b"));
+        assert_eq!(compute_variable(&vec![json!("1")], &data), json!("b"));
     }
 
     #[test]
