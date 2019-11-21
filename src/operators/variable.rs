@@ -9,8 +9,7 @@ pub fn compute_variable(args: &Vec<Value>, data: &Value) -> Value {
         // Return the complete data, like in the js implementation.
         Value::Null => data.clone(),
         Value::String(s) => match data {
-            // TODO: Could we avoid clone here?
-            Value::Object(obj) => obj.get(s).cloned().unwrap_or(Value::Null),
+            Value::Object(_) => from_object_by_str(s, data),
             // Try to interpret the string as an index in the given array. If that is not
             // possible return Null.
             Value::Array(_) => s
@@ -34,6 +33,28 @@ pub fn compute_variable(args: &Vec<Value>, data: &Value) -> Value {
     }
 
     value
+}
+
+fn from_object_by_str(accessor: &String, data: &Value) -> Value {
+    let mut data_part = data;
+
+    for step in accessor.split('.') {
+        if !data_part.is_object() {
+            // We still have a step but the remaining data is not an object so nothing we can dive
+            // into.
+            return Value::Null;
+        }
+
+        if let Some(value) = data_part.as_object().unwrap().get(step) {
+            data_part = value;
+        } else {
+            // Property not found.
+            return Value::Null;
+        }
+    }
+
+    // TODO: Could we avoid cloning?
+    data_part.clone()
 }
 
 /// Extracts a value from the given data by index. Data can either be an array or an object
@@ -112,6 +133,24 @@ mod tests {
         assert_eq!(
             compute_variable(&vec![json!("unknown"), json!("def")], &data),
             json!("def")
+        );
+    }
+
+    #[test]
+    fn nested_object() {
+        let data = json!({ "foo": { "bar": "baz" }});
+
+        assert_eq!(
+            compute_variable(&vec![json!("foo.bar")], &data),
+            json!("baz")
+        );
+        assert_eq!(
+            compute_variable(&vec![json!("foo.bar.baz")], &data),
+            json!(null)
+        );
+        assert_eq!(
+            compute_variable(&vec![json!("foo")], &data),
+            json!({ "bar": "baz" })
         );
     }
 }
