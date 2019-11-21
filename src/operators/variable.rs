@@ -10,7 +10,7 @@ pub fn compute_variable(args: &Vec<Value>, data: &Value) -> Value {
         Value::Null => data.clone(),
         Value::String(arg) => from_data_by_str(arg, data),
         Value::Number(arg) => from_data_by_num(arg, data),
-        _ => unimplemented!(),
+        _ => Value::Null,
     };
 
     if value.is_null() {
@@ -102,6 +102,15 @@ fn from_data_by_num(num: &Number, data: &Value) -> Value {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn invalid_arguments() {
+        let data = json!({ "a": 5, "b": 6 });
+        assert_eq!(compute_variable(&vec![json!([])], &data), json!(null));
+        assert_eq!(compute_variable(&vec![json!({})], &data), json!(null));
+        assert_eq!(compute_variable(&vec![json!(true)], &data), json!(null));
+        assert_eq!(compute_variable(&vec![json!(false)], &data), json!(null));
+    }
 
     #[test]
     fn null_arg() {
