@@ -5,6 +5,7 @@ mod negation;
 mod not_equal;
 mod strict_equality;
 mod strict_not_equal;
+mod variable;
 
 use double_negation::compute_double_negation;
 use equality::compute_equality;
@@ -12,6 +13,7 @@ use negation::compute_negation;
 use not_equal::compute_not_equal;
 use strict_equality::compute_strict_equality;
 use strict_not_equal::compute_strict_not_equal;
+use variable::compute_variable;
 
 use serde_json::Value;
 
@@ -27,6 +29,8 @@ pub enum Operator {
     /// Tests strict not-equal.
     StrictNotEqual,
     /// Retrieve data from the provided data object.
+    ///
+    /// If the first argument is null, the data object is returned as is.
     Variable,
     /// Logical negation (“not”). Takes just one argument.
     Negation,
@@ -50,7 +54,7 @@ impl Operator {
         }
     }
 
-    pub fn compute(&self, args: &Vec<Value>) -> Value {
+    pub fn compute(&self, args: &Vec<Value>, data: &Value) -> Value {
         match self {
             Operator::Equal => Value::Bool(compute_equality(&args)),
             Operator::NotEqual => Value::Bool(compute_not_equal(&args)),
@@ -58,7 +62,7 @@ impl Operator {
             Operator::StrictNotEqual => Value::Bool(compute_strict_not_equal(&args)),
             Operator::Negation => Value::Bool(compute_negation(&args)),
             Operator::DoubleNegation => Value::Bool(compute_double_negation(&args)),
-            Operator::Variable => unimplemented!(),
+            Operator::Variable => compute_variable(args, data),
         }
     }
 }

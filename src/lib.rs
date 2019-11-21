@@ -6,8 +6,12 @@ mod expression;
 mod operators;
 
 pub fn apply(json_logic: &Value) -> Result<Value, String> {
+    apply_with_data(json_logic, &Value::Null)
+}
+
+pub fn apply_with_data(json_logic: &Value, data: &Value) -> Result<Value, String> {
     let ast = expression::Expression::from_json(json_logic)?;
-    Ok(ast.compute())
+    Ok(ast.compute_with_data(data))
 }
 
 pub fn get_variable_names(json_logic: &Value) -> Result<std::collections::HashSet<String>, String> {
@@ -78,6 +82,86 @@ mod tests {
             test_equality(&json!([1]), &json!("1"), true);
             test_equality(&json!([1, 2]), &json!("1,2"), true);
             test_equality(&json!(0), &json!(null), false);
+        }
+    }
+
+    // var
+    mod variable {
+        use super::*;
+
+        #[test]
+        fn simple() {
+            assert_eq!(
+                apply_with_data(&json!({ "var": "a" }), &json!({ "a": 12, "b": 24 })),
+                Ok(json!(12))
+            );
+
+            assert_eq!(
+                apply_with_data(&json!({ "var": ["a"] }), &json!({ "a": 12, "b": 24 })),
+                Ok(json!(12))
+            );
+
+            assert_eq!(
+                apply_with_data(
+                    &json!({
+                        "==": [
+                            { "var": "var1" },
+                            "foo"
+                        ]
+                    }),
+                    &json!({ "var1": "foo"})
+                ),
+                Ok(json!(true))
+            );
+        }
+
+        #[test]
+        fn default() {
+            assert_eq!(
+                apply_with_data(&json!({ "var": ["nope"] }), &json!({ "a": 12, "b": 24 })),
+                Ok(json!(null))
+            );
+            assert_eq!(
+                apply_with_data(&json!({ "var": ["nope", 5] }), &json!({ "a": 12, "b": 24 })),
+                Ok(json!(5))
+            );
+        }
+
+        #[test]
+        fn complex() {
+            let logic = json!({
+                "==": [
+                    { "var": "var1" },
+                    {
+                        "var": [
+                            "noneVar",
+                            { "var": "var2" }
+                        ]
+                    }
+                ]
+            });
+
+            assert_eq!(
+                apply_with_data(
+                    &logic,
+                    &json!({
+                        "var1": "foo",
+                        "var2": "bar"
+                    })
+                ),
+                Ok(json!(false))
+            );
+
+            assert_eq!(
+                apply_with_data(
+                    &logic,
+                    &json!({
+                        "var1": "foo",
+                        "var2": "foo"
+                    })
+                ),
+                Ok(json!(true))
+            );
         }
     }
 

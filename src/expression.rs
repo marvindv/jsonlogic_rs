@@ -39,11 +39,16 @@ impl<'a> Expression<'a> {
 
     /// Computes the expression and returns value it evaluates to.
     pub fn compute(&self) -> Value {
+        self.compute_with_data(&Value::Null)
+    }
+
+    /// Computes the expression and returns value it evaluates to.
+    pub fn compute_with_data(&self, data: &Value) -> Value {
         match self {
             Expression::Constant(value) => (*value).clone(),
             Expression::Computed(operator, args) => {
-                let args = args.iter().map(|arg| arg.compute()).collect();
-                operator.compute(&args)
+                let args = args.iter().map(|arg| arg.compute_with_data(data)).collect();
+                operator.compute(&args, data)
             }
         }
     }
