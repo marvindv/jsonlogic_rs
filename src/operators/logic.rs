@@ -54,60 +54,68 @@ pub fn is_loose_equal(a: &Value, b: &Value) -> bool {
 
 fn equal_array_bool(array_val: &Value, bool_val: bool) -> bool {
     let arr_str = array_to_str(array_val);
-    match str_to_number(&arr_str) {
+    match str_to_u64(&arr_str) {
         // This matches for arrays [1] or [0], ... or [100] of course.
-        Some(arr_num) => arr_num == bool_to_number(bool_val),
+        Some(arr_num) => equal_u64_boolean(arr_num, bool_val),
         // If it is not a number, interpret as a string. Might be [true] or [false].
         None => arr_str == "true",
     }
 }
 
 fn equal_number_string(number_val: &Number, str_val: &str) -> bool {
-    let num1 = number_val.as_f64().unwrap();
-    match str_to_number(str_val) {
-        Some(num2) => num1 == num2,
-        None => false,
+    let num1 = number_val.as_f64().unwrap().to_string();
+    let num2 = str_val.trim();
+
+    // case for `0 == ""`
+    if num2 == "" {
+        num1 == "0"
+    } else {
+        num1 == num2
     }
 }
 
 fn equal_number_boolean(number_val: &Number, bool_val: bool) -> bool {
     let num1 = number_val.as_f64().unwrap();
-    let num2 = bool_to_number(bool_val);
+    if num1.fract() != 0f64 || num1 < 0f64 {
+        return false;
+    }
+
+    equal_u64_boolean(num1 as u64, bool_val)
+}
+
+fn equal_u64_boolean(num1: u64, bool_val: bool) -> bool {
+    let num2 = bool_to_u64(bool_val);
     num1 == num2
 }
 
 fn equal_string_boolean(string_val: &str, bool_val: bool) -> bool {
-    let num2 = bool_to_number(bool_val);
-    match str_to_number(string_val) {
+    let num2 = bool_to_u64(bool_val);
+    match str_to_u64(string_val) {
         Some(num1) => num1 == num2,
         None => false,
     }
 }
 
 fn equal_number_array(number_val: &Number, array_val: &Value) -> bool {
-    let num1 = number_val.as_f64().unwrap();
-    match str_to_number(&array_to_str(array_val)) {
-        Some(num2) => num1 == num2,
-        None => false,
-    }
+    let num1 = number_val.to_string();
+    let num2 = array_to_str(array_val);
+    num1 == num2
 }
 
-fn str_to_number(s: &str) -> Option<f64> {
+fn str_to_u64(s: &str) -> Option<u64> {
     let s = s.trim();
     if s == "" {
-        return Some(0f64);
+        return Some(0);
     }
-    match s.parse::<f64>() {
-        Ok(num) => Some(num),
-        Err(_) => None,
-    }
+
+    s.parse::<u64>().ok()
 }
 
-fn bool_to_number(b: bool) -> f64 {
+fn bool_to_u64(b: bool) -> u64 {
     if b {
-        1f64
+        1
     } else {
-        0f64
+        0
     }
 }
 
@@ -171,19 +179,55 @@ mod tests {
 
     #[test]
     fn loose_equal_diff_type() {
-        test_loose_equal!(0, false);
-        test_loose_equal!("", false);
-        test_loose_equal!("", 0);
-        test_loose_equal!("0", 0);
-        test_loose_equal!("17", 17);
         test_loose_equal!([1, 2], "1,2");
-        test_loose_equal!([1], 1);
-        test_loose_equal!([1], true);
-        test_loose_equal!([true], true);
     }
 
     #[test]
     fn loose_not_equal() {
         test_loose_not_equal!(0, &Value::Null);
+    }
+
+    #[test]
+    fn number_boolean() {
+        test_loose_equal!(-0, false);
+        test_loose_equal!(0, false);
+
+        test_loose_equal!(1, true);
+        test_loose_equal!(1.0, true);
+
+        test_loose_not_equal!(-1, true);
+        test_loose_not_equal!(0.1 + 0.2, false);
+    }
+
+    #[test]
+    fn number_string() {
+        test_loose_equal!("", 0);
+        test_loose_equal!("0", 0);
+        test_loose_equal!("17", 17);
+        test_loose_equal!("-17", -17);
+        test_loose_equal!("   1 ", 1);
+        test_loose_equal!("   1.3 ", 1.3);
+    }
+
+    #[test]
+    fn array_bool() {
+        test_loose_equal!([1], true);
+        test_loose_equal!([true], true);
+    }
+
+    #[test]
+    fn string_bool() {
+        test_loose_equal!("", false);
+        test_loose_equal!("  ", false);
+        test_loose_equal!("0", false);
+        test_loose_equal!("  0 ", false);
+        test_loose_equal!("1", true);
+        test_loose_equal!(" 1  ", true);
+    }
+
+    #[test]
+    fn number_array() {
+        test_loose_equal!([1], 1);
+        test_loose_equal!([1.2], 1.2);
     }
 }
