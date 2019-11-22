@@ -1,5 +1,6 @@
 mod double_negation;
 mod equality;
+mod if_else;
 mod logic;
 mod negation;
 mod not_equal;
@@ -11,6 +12,7 @@ use super::Data;
 
 use double_negation::compute_double_negation;
 use equality::compute_equality;
+use if_else::IfElse;
 use negation::compute_negation;
 use not_equal::compute_not_equal;
 use strict_equality::compute_strict_equality;
@@ -38,6 +40,10 @@ pub enum Operator {
     Negation,
     /// Double negation, or “cast to a boolean.” Takes a single argument.
     DoubleNegation,
+    /// The if statement typically takes 3 arguments: a condition (if), what to do if it’s true
+    /// (then), and what to do if it’s false (else). If can also take more than 3 arguments, and
+    /// will pair up arguments like if/then elseif/then elseif/then else.
+    If,
 }
 
 impl Operator {
@@ -52,6 +58,7 @@ impl Operator {
             "var" => Some(Operator::Variable),
             "!" => Some(Operator::Negation),
             "!!" => Some(Operator::DoubleNegation),
+            "if" => Some(Operator::If),
             _ => None,
         }
     }
@@ -65,8 +72,13 @@ impl Operator {
             Operator::Negation => Value::Bool(compute_negation(&args)),
             Operator::DoubleNegation => Value::Bool(compute_double_negation(&args)),
             Operator::Variable => compute_variable(args, data),
+            Operator::If => IfElse::compute(&IfElse, args, data),
         }
     }
+}
+
+pub trait Computable {
+    fn compute(&self, args: &[Value], data: &Data) -> Value;
 }
 
 #[cfg(test)]
