@@ -38,7 +38,7 @@ impl<'a> Data<'a> {
     /// Trys to get a value from the given data by the path. This can be a simple key or a
     /// stringified index for strings and arrays but complex dot-notation access paths are also
     /// supported.
-    fn by_string(&self, path: &String) -> Option<Value> {
+    fn by_string(&self, path: &str) -> Option<Value> {
         let mut data_part = self.0;
 
         // While we can traverse through arrays and objects, we can't for a characters. Character
@@ -49,7 +49,7 @@ impl<'a> Data<'a> {
         for step in path.split('.') {
             // In the previous step an character from a string was accessed, which must be the last
             // step since a character is considered a primitive here.
-            if let Some(_) = prev_step_char {
+            if prev_step_char.is_some() {
                 return None;
             }
 

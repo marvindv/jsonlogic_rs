@@ -56,7 +56,7 @@ impl Operator {
         }
     }
 
-    pub fn compute(&self, args: &Vec<Value>, data: &Data) -> Value {
+    pub fn compute(self, args: &[Value], data: &Data) -> Value {
         match self {
             Operator::Equal => Value::Bool(compute_equality(&args)),
             Operator::NotEqual => Value::Bool(compute_not_equal(&args)),

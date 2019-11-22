@@ -3,7 +3,7 @@ use serde_json::{Number, Value};
 /// See http://jsonlogic.com/truthy.html
 pub fn is_truthy(value: &Value) -> bool {
     match value {
-        Value::Array(arr) => arr.len() > 0,
+        Value::Array(arr) => !arr.is_empty(),
         Value::Bool(b) => *b,
         Value::Null => false,
         Value::Number(num) => num.as_f64().unwrap() != 0f64,
@@ -62,7 +62,7 @@ fn equal_array_bool(array_val: &Value, bool_val: bool) -> bool {
     }
 }
 
-fn equal_number_string(number_val: &Number, str_val: &String) -> bool {
+fn equal_number_string(number_val: &Number, str_val: &str) -> bool {
     let num1 = number_val.as_f64().unwrap();
     match str_to_number(str_val) {
         Some(num2) => num1 == num2,
@@ -76,7 +76,7 @@ fn equal_number_boolean(number_val: &Number, bool_val: bool) -> bool {
     num1 == num2
 }
 
-fn equal_string_boolean(string_val: &String, bool_val: bool) -> bool {
+fn equal_string_boolean(string_val: &str, bool_val: bool) -> bool {
     let num2 = bool_to_number(bool_val);
     match str_to_number(string_val) {
         Some(num1) => num1 == num2,
@@ -147,28 +147,43 @@ mod tests {
     }
 
     macro_rules! test_loose_equal {
-        ($a:expr, $b:expr, $expect:expr) => {
-            assert_eq!(is_loose_equal($a, $b), $expect);
-            assert_eq!(is_loose_equal($b, $a), $expect);
+        ($a:expr, $b:expr) => {
+            assert_eq!(is_loose_equal(&json!($a), &json!($b)), true);
+            assert_eq!(is_loose_equal(&json!($b), &json!($a)), true);
+        };
+    }
+
+    macro_rules! test_loose_not_equal {
+        ($a:expr, $b:expr) => {
+            assert_eq!(is_loose_equal(&json!($a), &json!($b)), false);
+            assert_eq!(is_loose_equal(&json!($b), &json!($a)), false);
         };
     }
 
     #[test]
-    fn loose_equal() {
-        test_loose_equal!(&Value::Null, &Value::Null, true);
-        test_loose_equal!(&json!(true), &json!(true), true);
-        test_loose_equal!(&json!(false), &json!(false), true);
-        test_loose_equal!(&json!("foo"), &json!("foo"), true);
-        test_loose_equal!(&json!(0), &json!(0), true);
-        test_loose_equal!(&json!(0), &json!(false), true);
-        test_loose_equal!(&json!(""), &json!(false), true);
-        test_loose_equal!(&json!(""), &json!(0), true);
-        test_loose_equal!(&json!("0"), &json!(0), true);
-        test_loose_equal!(&json!("17"), &json!(17), true);
-        test_loose_equal!(&json!([1, 2]), &json!("1,2"), true);
-        test_loose_equal!(&json!([1]), &json!(1), true);
-        test_loose_equal!(&json!(0), &Value::Null, false);
-        test_loose_equal!(&json!([1]), &json!(true), true);
-        test_loose_equal!(&json!([true]), &json!(true), true);
+    fn loose_equal_same_type() {
+        test_loose_equal!(Value::Null, Value::Null);
+        test_loose_equal!(true, true);
+        test_loose_equal!(false, false);
+        test_loose_equal!("foo", "foo");
+        test_loose_equal!(0, 0);
+    }
+
+    #[test]
+    fn loose_equal_diff_type() {
+        test_loose_equal!(0, false);
+        test_loose_equal!("", false);
+        test_loose_equal!("", 0);
+        test_loose_equal!("0", 0);
+        test_loose_equal!("17", 17);
+        test_loose_equal!([1, 2], "1,2");
+        test_loose_equal!([1], 1);
+        test_loose_equal!([1], true);
+        test_loose_equal!([true], true);
+    }
+
+    #[test]
+    fn loose_not_equal() {
+        test_loose_not_equal!(0, &Value::Null);
     }
 }

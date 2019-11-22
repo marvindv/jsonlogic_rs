@@ -25,7 +25,7 @@ impl<'a> Expression<'a> {
         let entry: Vec<(&String, &serde_json::Value)> = object.iter().collect();
         let &(operator_key, value) = entry.get(0).unwrap();
         let operator = Operator::from_str(operator_key)
-            .ok_or(format!("Unrecognized operation {}", operator_key))?;
+            .ok_or_else(|| format!("Unrecognized operation {}", operator_key))?;
 
         let arguments: Vec<_> = match value {
             Value::Array(arr) => arr.iter().map(|expr| Expression::from_json(expr)).collect(),
@@ -48,7 +48,7 @@ impl<'a> Expression<'a> {
         match self {
             Expression::Constant(value) => (*value).clone(),
             Expression::Computed(operator, args) => {
-                let args = args.iter().map(|arg| arg.compute_with_data(data)).collect();
+                let args: Vec<Value> = args.iter().map(|arg| arg.compute_with_data(data)).collect();
                 operator.compute(&args, data)
             }
         }
