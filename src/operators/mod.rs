@@ -7,6 +7,8 @@ mod strict_equality;
 mod strict_not_equal;
 mod variable;
 
+use super::Data;
+
 use double_negation::compute_double_negation;
 use equality::compute_equality;
 use negation::compute_negation;
@@ -54,7 +56,7 @@ impl Operator {
         }
     }
 
-    pub fn compute(&self, args: &Vec<Value>, data: &Value) -> Value {
+    pub fn compute(&self, args: &Vec<Value>, data: &Data) -> Value {
         match self {
             Operator::Equal => Value::Bool(compute_equality(&args)),
             Operator::NotEqual => Value::Bool(compute_not_equal(&args)),

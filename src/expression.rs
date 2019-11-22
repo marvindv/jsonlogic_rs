@@ -1,4 +1,5 @@
 use crate::operators::Operator;
+use crate::Data;
 use serde_json::Value;
 use std::collections::HashSet;
 
@@ -39,11 +40,11 @@ impl<'a> Expression<'a> {
 
     /// Computes the expression and returns value it evaluates to.
     pub fn compute(&self) -> Value {
-        self.compute_with_data(&Value::Null)
+        self.compute_with_data(&Data::from_json(&Value::Null))
     }
 
     /// Computes the expression and returns value it evaluates to.
-    pub fn compute_with_data(&self, data: &Value) -> Value {
+    pub fn compute_with_data(&self, data: &Data) -> Value {
         match self {
             Expression::Constant(value) => (*value).clone(),
             Expression::Computed(operator, args) => {
