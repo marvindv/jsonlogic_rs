@@ -12,7 +12,7 @@ use super::Data;
 
 use double_negation::compute_double_negation;
 use equality::compute_equality;
-use if_else::IfElse;
+use if_else::compute_if;
 use negation::compute_negation;
 use not_equal::compute_not_equal;
 use strict_equality::compute_strict_equality;
@@ -72,7 +72,7 @@ impl Operator {
             Operator::Negation => Value::Bool(compute_negation(&args)),
             Operator::DoubleNegation => Value::Bool(compute_double_negation(&args)),
             Operator::Variable => compute_variable(args, data),
-            Operator::If => IfElse::compute(&IfElse, args, data),
+            Operator::If => compute_if(args, data),
         }
     }
 }
