@@ -284,4 +284,68 @@ mod tests {
             test_strict_not_equal(&json!(0), &json!(null), true);
         }
     }
+    mod or {
+        use super::*;
+
+        #[test]
+        fn test() {
+            // The javascript implementation returns `undefined` for this case but `null` should be
+            // fine here.
+            assert_eq!(
+                apply(&json!({
+                    "or": []
+                })),
+                Ok(Value::Null)
+            );
+
+            assert_eq!(
+                apply(&json!({
+                    "or": [false]
+                })),
+                Ok(Value::Bool(false))
+            );
+
+            assert_eq!(
+                apply(&json!({
+                    "or": [""]
+                })),
+                Ok(json!(""))
+            );
+
+            assert_eq!(
+                apply(&json!({
+                    "or": ["foo"]
+                })),
+                Ok(json!("foo"))
+            );
+
+            assert_eq!(
+                apply(&json!({
+                    "or": [false, "", 0]
+                })),
+                Ok(json!(0))
+            );
+
+            assert_eq!(
+                apply(&json!({
+                    "or": [false, "", 0, true, false]
+                })),
+                Ok(Value::Bool(true))
+            );
+
+            assert_eq!(
+                apply(&json!({
+                    "or": [false, "", 0, true, "foo", false]
+                })),
+                Ok(Value::Bool(true))
+            );
+
+            assert_eq!(
+                apply(&json!({
+                    "or": [false, "", 0, "foo", true, false]
+                })),
+                Ok(json!("foo"))
+            );
+        }
+    }
 }

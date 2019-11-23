@@ -4,6 +4,7 @@ mod if_else;
 mod logic;
 mod negation;
 mod not_equal;
+mod or;
 mod strict_equality;
 mod strict_not_equal;
 mod variable;
@@ -35,6 +36,9 @@ pub enum Operator {
     /// (then), and what to do if it’s false (else). If can also take more than 3 arguments, and
     /// will pair up arguments like if/then elseif/then elseif/then else.
     If,
+    /// Takes an arbitrary number of arguments. Returns the first truthy argument or the last
+    /// argument.
+    Or,
 }
 
 impl Operator {
@@ -50,6 +54,7 @@ impl Operator {
             "!" => Some(Operator::Negation),
             "!!" => Some(Operator::DoubleNegation),
             "if" => Some(Operator::If),
+            "or" => Some(Operator::Or),
             _ => None,
         }
     }
@@ -64,6 +69,7 @@ impl Operator {
             Operator::DoubleNegation => double_negation::compute(args),
             Operator::Variable => variable::compute(args, data),
             Operator::If => if_else::compute(args),
+            Operator::Or => or::compute(args),
         }
     }
 }
