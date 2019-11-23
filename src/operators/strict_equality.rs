@@ -1,8 +1,8 @@
 use serde_json::{json, Value};
 
-pub fn compute_strict_equality(args: &[Value]) -> bool {
-    let a = args.get(0).unwrap_or_else(|| &json!(null));
-    let b = args.get(1).unwrap_or_else(|| &json!(null));
+pub fn compute(args: &[Value]) -> Value {
+    let a = args.get(0).unwrap_or(&json!(null));
+    let b = args.get(1).unwrap_or(&json!(null));
 
-    a == b
+    Value::Bool(a == b)
 }

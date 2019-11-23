@@ -11,6 +11,7 @@ impl<'a> Data<'a> {
     }
 
     /// Creates an empty struct, encapsulating a null value.
+    #[allow(dead_code)]
     pub fn empty() -> Data<'static> {
         Data(&Value::Null)
     }

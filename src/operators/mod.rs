@@ -8,18 +8,9 @@ mod strict_equality;
 mod strict_not_equal;
 mod variable;
 
-use super::Data;
-
-use double_negation::compute_double_negation;
-use equality::compute_equality;
-use if_else::compute_if;
-use negation::compute_negation;
-use not_equal::compute_not_equal;
-use strict_equality::compute_strict_equality;
-use strict_not_equal::compute_strict_not_equal;
-use variable::compute_variable;
-
 use serde_json::Value;
+
+use super::Data;
 
 /// Represents a JsonLogic operator.
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -65,20 +56,16 @@ impl Operator {
 
     pub fn compute(self, args: &[Value], data: &Data) -> Value {
         match self {
-            Operator::Equal => Value::Bool(compute_equality(&args)),
-            Operator::NotEqual => Value::Bool(compute_not_equal(&args)),
-            Operator::StrictEqual => Value::Bool(compute_strict_equality(&args)),
-            Operator::StrictNotEqual => Value::Bool(compute_strict_not_equal(&args)),
-            Operator::Negation => Value::Bool(compute_negation(&args)),
-            Operator::DoubleNegation => Value::Bool(compute_double_negation(&args)),
-            Operator::Variable => compute_variable(args, data),
-            Operator::If => compute_if(args, data),
+            Operator::Equal => equality::compute(args),
+            Operator::NotEqual => not_equal::compute(args),
+            Operator::StrictEqual => strict_equality::compute(args),
+            Operator::StrictNotEqual => strict_not_equal::compute(args),
+            Operator::Negation => negation::compute(args),
+            Operator::DoubleNegation => double_negation::compute(args),
+            Operator::Variable => variable::compute(args, data),
+            Operator::If => if_else::compute(args),
         }
     }
-}
-
-pub trait Computable {
-    fn compute(&self, args: &[Value], data: &Data) -> Value;
 }
 
 #[cfg(test)]

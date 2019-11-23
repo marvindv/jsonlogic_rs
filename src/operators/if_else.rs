@@ -1,7 +1,8 @@
-use super::{logic, Data};
 use serde_json::Value;
 
-pub fn compute_if(args: &[Value], _: &Data) -> Value {
+use super::logic;
+
+pub fn compute(args: &[Value]) -> Value {
     match args.len() {
         // Return the condition, for whatever reason.
         0..=1 => args.get(0).cloned().unwrap_or(Value::Null),
@@ -51,79 +52,55 @@ mod tests {
 
     #[test]
     fn simple() {
-        let data = &Data::empty();
         let null = json!(null);
 
-        assert_eq!(compute_if(&[], data), null);
-        assert_eq!(compute_if(&[Value::Null], data), null);
+        assert_eq!(compute(&[]), null);
+        assert_eq!(compute(&[Value::Null]), null);
     }
 
     #[test]
     fn one_arg() {
-        let data = &Data::empty();
-
-        assert_eq!(compute_if(&[json!(true)], data), json!(true));
-        assert_eq!(compute_if(&[json!(false)], data), json!(false));
-        assert_eq!(compute_if(&[json!("foo")], data), json!("foo"));
+        assert_eq!(compute(&[json!(true)]), json!(true));
+        assert_eq!(compute(&[json!(false)]), json!(false));
+        assert_eq!(compute(&[json!("foo")]), json!("foo"));
     }
 
     #[test]
     fn two_args() {
-        let data = &Data::empty();
-
-        assert_eq!(compute_if(&[json!(true), json!(5)], data), json!(5));
-        assert_eq!(compute_if(&[json!(false), json!(5)], data), json!(null));
-        assert_eq!(
-            compute_if(&[json!("foo"), json!("bar")], data),
-            json!("bar")
-        );
+        assert_eq!(compute(&[json!(true), json!(5)]), json!(5));
+        assert_eq!(compute(&[json!(false), json!(5)]), json!(null));
+        assert_eq!(compute(&[json!("foo"), json!("bar")]), json!("bar"));
     }
 
     #[test]
     fn three_args() {
-        let data = &Data::empty();
-
-        assert_eq!(
-            compute_if(&[json!(true), json!(5), json!(6)], data),
-            json!(5)
-        );
-        assert_eq!(
-            compute_if(&[json!(false), json!(5), json!(6)], data),
-            json!(6)
-        );
+        assert_eq!(compute(&[json!(true), json!(5), json!(6)]), json!(5));
+        assert_eq!(compute(&[json!(false), json!(5), json!(6)]), json!(6));
     }
 
     #[test]
     fn more() {
-        let data = &Data::empty();
-
         assert_eq!(
-            compute_if(&[json!(false), json!(5), json!(true), json!(6)], data),
+            compute(&[json!(false), json!(5), json!(true), json!(6)]),
             json!(6)
         );
         assert_eq!(
-            compute_if(&[json!(false), json!(5), json!(false), json!(6)], data),
+            compute(&[json!(false), json!(5), json!(false), json!(6)]),
             json!(null)
         );
         assert_eq!(
-            compute_if(
-                &[json!(false), json!(5), json!(false), json!(6), json!(7)],
-                data
-            ),
+            compute(&[json!(false), json!(5), json!(false), json!(6), json!(7)]),
             json!(7)
         );
         assert_eq!(
-            compute_if(
-                &[
-                    json!(false),
-                    json!(5),
-                    json!(false),
-                    json!(6),
-                    json!(7),
-                    json!(8)
-                ],
-                data
-            ),
+            compute(&[
+                json!(false),
+                json!(5),
+                json!(false),
+                json!(6),
+                json!(7),
+                json!(8)
+            ]),
             json!(8)
         );
     }

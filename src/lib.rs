@@ -16,7 +16,7 @@ pub fn apply(json_logic: &Value) -> Result<Value, String> {
 pub fn apply_with_data(json_logic: &Value, data: &Value) -> Result<Value, String> {
     let ast = expression::Expression::from_json(json_logic)?;
     let data = Data::from_json(data);
-    Ok(ast.compute_with_data(&data))
+    Ok(ast.compute(&data))
 }
 
 pub fn get_variable_names(json_logic: &Value) -> Result<HashSet<String>, String> {

@@ -1,6 +1,8 @@
-use super::strict_equality::compute_strict_equality;
-use serde_json::Value;
+use serde_json::{json, Value};
 
-pub fn compute_strict_not_equal(args: &[Value]) -> bool {
-    !compute_strict_equality(args)
+pub fn compute(args: &[Value]) -> Value {
+    let a = args.get(0).unwrap_or(&json!(null));
+    let b = args.get(1).unwrap_or(&json!(null));
+
+    Value::Bool(a != b)
 }

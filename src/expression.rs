@@ -39,16 +39,12 @@ impl<'a> Expression<'a> {
     }
 
     /// Computes the expression and returns value it evaluates to.
-    pub fn compute(&self) -> Value {
-        self.compute_with_data(&Data::from_json(&Value::Null))
-    }
-
-    /// Computes the expression and returns value it evaluates to.
-    pub fn compute_with_data(&self, data: &Data) -> Value {
+    pub fn compute(&self, data: &Data) -> Value {
         match self {
             Expression::Constant(value) => (*value).clone(),
             Expression::Computed(operator, args) => {
-                let args: Vec<Value> = args.iter().map(|arg| arg.compute_with_data(data)).collect();
+                // TODO: It would be awesome if the args would be lazy evaluated.
+                let args: Vec<Value> = args.iter().map(|arg| arg.compute(data)).collect();
                 operator.compute(&args, data)
             }
         }
@@ -261,14 +257,17 @@ mod tests {
 
         #[test]
         fn constant_expression() {
-            assert_eq!(Constant(&json!(1)).compute(), json!(1));
+            assert_eq!(Constant(&json!(1)).compute(&Data::empty()), json!(1));
         }
 
         #[test]
         fn equal() {
-            assert_eq!(Computed(Operator::Equal, vec![]).compute(), json!(true));
             assert_eq!(
-                Computed(Operator::Equal, vec![Constant(&json!(null))]).compute(),
+                Computed(Operator::Equal, vec![]).compute(&Data::empty()),
+                json!(true)
+            );
+            assert_eq!(
+                Computed(Operator::Equal, vec![Constant(&json!(null))]).compute(&Data::empty()),
                 json!(true)
             );
             assert_eq!(
@@ -276,7 +275,7 @@ mod tests {
                     Operator::Equal,
                     vec![Constant(&json!(1)), Constant(&json!(1))]
                 )
-                .compute(),
+                .compute(&Data::empty()),
                 json!(true)
             );
             assert_eq!(
@@ -284,7 +283,7 @@ mod tests {
                     Operator::Equal,
                     vec![Constant(&json!(1)), Constant(&json!(2))]
                 )
-                .compute(),
+                .compute(&Data::empty()),
                 json!(false)
             );
         }
