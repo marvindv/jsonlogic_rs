@@ -1,3 +1,4 @@
+mod and;
 mod double_negation;
 mod equality;
 mod if_else;
@@ -39,6 +40,9 @@ pub enum Operator {
     /// Takes an arbitrary number of arguments. Returns the first truthy argument or the last
     /// argument.
     Or,
+    /// Takes an arbitrary number of arguments. Returns the first falsy argument or the last
+    /// argument.
+    And,
 }
 
 impl Operator {
@@ -55,6 +59,7 @@ impl Operator {
             "!!" => Some(Operator::DoubleNegation),
             "if" => Some(Operator::If),
             "or" => Some(Operator::Or),
+            "and" => Some(Operator::And),
             _ => None,
         }
     }
@@ -70,6 +75,7 @@ impl Operator {
             Operator::Variable => variable::compute(args, data),
             Operator::If => if_else::compute(args),
             Operator::Or => or::compute(args),
+            Operator::And => and::compute(args),
         }
     }
 }
@@ -87,5 +93,8 @@ mod tests {
         assert_eq!(Operator::from_str("var"), Some(Operator::Variable));
         assert_eq!(Operator::from_str("!"), Some(Operator::Negation));
         assert_eq!(Operator::from_str("!!"), Some(Operator::DoubleNegation));
+        assert_eq!(Operator::from_str("if"), Some(Operator::If));
+        assert_eq!(Operator::from_str("or"), Some(Operator::Or));
+        assert_eq!(Operator::from_str("and"), Some(Operator::And));
     }
 }

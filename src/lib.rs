@@ -348,4 +348,18 @@ mod tests {
             );
         }
     }
+
+    mod and {
+        use super::*;
+
+        #[test]
+        fn test() {
+            assert_eq!(apply(&json!({"and": []})), Ok(json!(null)));
+            assert_eq!(apply(&json!({"and": [true, true]})), Ok(json!(true)));
+            assert_eq!(apply(&json!({"and": [true, false]})), Ok(json!(false)));
+            assert_eq!(apply(&json!({"and": [true, ""]})), Ok(json!("")));
+            assert_eq!(apply(&json!({"and": [true, "a", 3]})), Ok(json!(3)));
+            assert_eq!(apply(&json!({"and": [true, "", 3]})), Ok(json!("")));
+        }
+    }
 }
