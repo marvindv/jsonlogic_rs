@@ -14,41 +14,34 @@ pub fn is_truthy(value: &Value) -> bool {
 
 // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness
 pub fn is_loose_equal(a: &Value, b: &Value) -> bool {
-    match a {
-        Value::Null => b.is_null(),
-        Value::Number(a) => match b {
-            Value::Null => false,
-            Value::Number(b) => a == b,
-            Value::String(b) => equal_number_string(a, b),
-            Value::Bool(b) => equal_number_boolean(a, *b),
-            Value::Array(_) => equal_number_array(a, b),
-            Value::Object(_) => false,
-        },
-        Value::String(a) => match b {
-            Value::Null => false,
-            Value::Number(b) => equal_number_string(b, a),
-            Value::String(b) => a == b,
-            Value::Bool(b) => equal_string_boolean(a, *b),
-            Value::Array(_) => a == &array_to_str(b),
-            Value::Object(_) => false,
-        },
-        Value::Bool(a) => match b {
-            Value::Null => false,
-            Value::Number(b) => equal_number_boolean(b, *a),
-            Value::String(b) => equal_string_boolean(b, *a),
-            Value::Bool(b) => a == b,
-            Value::Array(_) => equal_array_bool(b, *a),
-            Value::Object(_) => false,
-        },
-        Value::Array(_) => match b {
-            Value::Null => false,
-            Value::Number(b) => equal_number_array(b, a),
-            Value::String(b) => b == &array_to_str(a),
-            Value::Bool(b) => equal_array_bool(a, *b),
-            Value::Array(_) => a == b,
-            Value::Object(_) => false,
-        },
-        Value::Object(_) => false,
+    use Value::*;
+
+    match (a, b) {
+        // a==b iff a=b=null or a,b != null
+        (Null, Null) => true,
+        (Null, _) | (_, Null) => false,
+        // An object is never equal to something else, including another object.
+        (Object(_), _) | (_, Object(_)) => false,
+        // Same types
+        (Number(a), Number(b)) => a == b,
+        (String(a), String(b)) => a == b,
+        (Bool(a), Bool(b)) => a == b,
+        (Array(_), Array(_)) => a == b,
+        // Number == String <=> String == Number
+        (Number(a), String(b)) | (String(b), Number(a)) => equal_number_string(a, b),
+        // Number == Bool <=> Bool == Number
+        (Number(a), Bool(b)) | (Bool(b), Number(a)) => equal_number_boolean(a, *b),
+        // String == Bool <=> Bool == String
+        (String(a), Bool(b)) | (Bool(b), String(a)) => equal_string_boolean(a, *b),
+        // String == Array <=> Array == String
+        (String(a), Array(_)) => a == &array_to_str(b),
+        (Array(_), String(b)) => b == &array_to_str(a),
+        // Bool == Array <=> Array == Bool
+        (Bool(a), Array(_)) => equal_array_bool(b, *a),
+        (Array(_), Bool(b)) => equal_array_bool(a, *b),
+        // Number == Array <=> Array == Number
+        (Number(a), Array(_)) => equal_number_array(a, b),
+        (Array(_), Number(b)) => equal_number_array(b, a),
     }
 }
 
