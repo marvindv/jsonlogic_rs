@@ -284,6 +284,26 @@ mod tests {
             test_strict_not_equal(&json!(0), &json!(null), true);
         }
     }
+
+    // if
+    mod if_else {
+        use super::*;
+
+        #[test]
+        fn if_elseif() {
+            let logic = json!({"if" : [
+              {"<": [{"var":"temp"}, 0] }, "freezing",
+              {"<": [{"var":"temp"}, 100] }, "liquid",
+              "gas"
+            ]});
+
+            assert_eq!(
+                apply_with_data(&logic, &json!({ "temp": 50 })),
+                Ok(json!("liquid"))
+            );
+        }
+    }
+
     mod or {
         use super::*;
 
