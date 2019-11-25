@@ -1,7 +1,11 @@
 mod and;
 mod double_negation;
 mod equality;
+mod greater_equal_than;
+mod greater_than;
 mod if_else;
+mod less_equal_than;
+mod less_than;
 mod logic;
 mod negation;
 mod not_equal;
@@ -43,6 +47,14 @@ pub enum Operator {
     /// Takes an arbitrary number of arguments. Returns the first falsy argument or the last
     /// argument.
     And,
+    /// Less than. Takes exactly 2 arguments, otherwise returns `false`.
+    LessThan,
+    /// Less or equal than. Takes exactly 2 arguments, otherwise returns `false`.
+    LessEqualThan,
+    /// Greater than. Takes exactly 2 arguments, otherwise returns `false`.
+    GreaterThan,
+    /// Greater or equal than. Takes exactly 2 arguments, otherwise returns `false`.
+    GreaterEqualThan,
 }
 
 impl Operator {
@@ -60,6 +72,10 @@ impl Operator {
             "if" => Some(Operator::If),
             "or" => Some(Operator::Or),
             "and" => Some(Operator::And),
+            "<" => Some(Operator::LessThan),
+            "<=" => Some(Operator::LessEqualThan),
+            ">" => Some(Operator::GreaterThan),
+            ">=" => Some(Operator::GreaterEqualThan),
             _ => None,
         }
     }
@@ -76,6 +92,10 @@ impl Operator {
             Operator::If => if_else::compute(args),
             Operator::Or => or::compute(args),
             Operator::And => and::compute(args),
+            Operator::LessThan => less_than::compute(args),
+            Operator::LessEqualThan => less_equal_than::compute(args),
+            Operator::GreaterThan => greater_than::compute(args),
+            Operator::GreaterEqualThan => greater_equal_than::compute(args),
         }
     }
 }
@@ -96,5 +116,9 @@ mod tests {
         assert_eq!(Operator::from_str("if"), Some(Operator::If));
         assert_eq!(Operator::from_str("or"), Some(Operator::Or));
         assert_eq!(Operator::from_str("and"), Some(Operator::And));
+        assert_eq!(Operator::from_str("<"), Some(Operator::LessThan));
+        assert_eq!(Operator::from_str("<="), Some(Operator::LessEqualThan));
+        assert_eq!(Operator::from_str(">"), Some(Operator::GreaterThan));
+        assert_eq!(Operator::from_str(">="), Some(Operator::GreaterEqualThan));
     }
 }

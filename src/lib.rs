@@ -362,4 +362,22 @@ mod tests {
             assert_eq!(apply(&json!({"and": [true, "", 3]})), Ok(json!("")));
         }
     }
+
+    mod numeric_operations {
+        use super::*;
+
+        #[test]
+        fn test() {
+            // Only simple tests here, the hardcore coercion tests are in the logic.rs file.
+            assert_eq!(apply(&json!({"<": []})), Ok(json!(false)));
+            assert_eq!(apply(&json!({"<": [1]})), Ok(json!(false)));
+            assert_eq!(apply(&json!({"<": [1, 2]})), Ok(json!(true)));
+            assert_eq!(apply(&json!({"<": [2, 1]})), Ok(json!(false)));
+            assert_eq!(apply(&json!({">": [2, 1]})), Ok(json!(true)));
+            assert_eq!(apply(&json!({">=": [2, 2]})), Ok(json!(true)));
+            assert_eq!(apply(&json!({">=": [2, 3]})), Ok(json!(false)));
+            assert_eq!(apply(&json!({"<=": [2, 2]})), Ok(json!(true)));
+            assert_eq!(apply(&json!({"<=": [3, 2]})), Ok(json!(false)));
+        }
+    }
 }
