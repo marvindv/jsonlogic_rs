@@ -13,7 +13,8 @@ pub fn is_truthy(value: &Value) -> bool {
 }
 
 // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness
-pub fn is_loose_equal(a: &Value, b: &Value) -> bool {
+// and https://www.ecma-international.org/ecma-262/#sec-abstract-equality-comparison
+pub fn is_abstract_equal(a: &Value, b: &Value) -> bool {
     use Value::*;
 
     match (a, b) {
@@ -81,7 +82,7 @@ pub fn less_than(a: &Value, b: &Value) -> bool {
 }
 
 pub fn less_equal_than(a: &Value, b: &Value) -> bool {
-    less_than(a, b) || is_loose_equal(a, b)
+    less_than(a, b) || is_abstract_equal(a, b)
 }
 
 pub fn greater_than(a: &Value, b: &Value) -> bool {
@@ -213,6 +214,84 @@ fn coerce_to_f64(val: &Value) -> Option<f64> {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    mod abstract_equal {
+        use super::*;
+
+        macro_rules! test_abstract_equal {
+            ($a:expr, $b:expr) => {
+                assert!(is_abstract_equal(&json!($a), &json!($b)));
+                assert!(is_abstract_equal(&json!($b), &json!($a)));
+            };
+        }
+        macro_rules! test_abstract_not_equal {
+            ($a:expr, $b:expr) => {
+                assert!(!is_abstract_equal(&json!($a), &json!($b)),);
+                assert!(!is_abstract_equal(&json!($b), &json!($a)),);
+            };
+        }
+        #[test]
+        fn loose_equal_same_type() {
+            test_abstract_equal!(Value::Null, Value::Null);
+            test_abstract_equal!(true, true);
+            test_abstract_equal!(false, false);
+            test_abstract_equal!("foo", "foo");
+            test_abstract_equal!(0, 0);
+            test_abstract_equal!(0, -0);
+            test_abstract_equal!(0, 0.0);
+            test_abstract_equal!(0.2, 0.2);
+        }
+        #[test]
+        fn loose_equal_diff_type() {
+            test_abstract_equal!([1, 2], "1,2");
+        }
+        #[test]
+        fn loose_not_equal() {
+            test_abstract_not_equal!(0, &Value::Null);
+        }
+        #[test]
+        fn number_boolean() {
+            test_abstract_equal!(-0, false);
+            test_abstract_equal!(0, false);
+            test_abstract_equal!(1, true);
+            test_abstract_equal!(1.0, true);
+            test_abstract_not_equal!(-1, true);
+            test_abstract_not_equal!(0.1 + 0.2, false);
+        }
+        #[test]
+        fn number_string() {
+            test_abstract_equal!("", 0);
+            test_abstract_equal!("0", 0);
+            test_abstract_equal!("-0", 0);
+            test_abstract_equal!("+0", 0);
+            test_abstract_equal!("0.0", 0);
+            test_abstract_equal!("+0.0", 0);
+            test_abstract_equal!("-0.0", 0);
+            test_abstract_equal!("17", 17);
+            test_abstract_equal!("-17", -17);
+            test_abstract_equal!("   1 ", 1);
+            test_abstract_equal!("   1.3 ", 1.3);
+        }
+        #[test]
+        fn array_bool() {
+            test_abstract_equal!([1], true);
+            test_abstract_equal!([true], true);
+        }
+        #[test]
+        fn string_bool() {
+            test_abstract_equal!("", false);
+            test_abstract_equal!("  ", false);
+            test_abstract_equal!("0", false);
+            test_abstract_equal!("  0 ", false);
+            test_abstract_equal!("1", true);
+            test_abstract_equal!(" 1  ", true);
+        }
+        #[test]
+        fn number_array() {
+            test_abstract_equal!([1], 1);
+            test_abstract_equal!([1.2], 1.2);
+        }
+    }
 
     mod test_less_than {
         use super::*;
@@ -444,90 +523,5 @@ mod tests {
         assert_eq!(coerce_to_f64(&json!(["1"])), Some(1f64));
         assert_eq!(coerce_to_f64(&json!(null)), Some(0f64));
         assert_eq!(coerce_to_f64(&json!([null])), Some(0f64));
-    }
-
-    macro_rules! test_loose_equal {
-        ($a:expr, $b:expr) => {
-            assert_eq!(is_loose_equal(&json!($a), &json!($b)), true);
-            assert_eq!(is_loose_equal(&json!($b), &json!($a)), true);
-        };
-    }
-
-    macro_rules! test_loose_not_equal {
-        ($a:expr, $b:expr) => {
-            assert_eq!(is_loose_equal(&json!($a), &json!($b)), false);
-            assert_eq!(is_loose_equal(&json!($b), &json!($a)), false);
-        };
-    }
-
-    #[test]
-    fn loose_equal_same_type() {
-        test_loose_equal!(Value::Null, Value::Null);
-        test_loose_equal!(true, true);
-        test_loose_equal!(false, false);
-        test_loose_equal!("foo", "foo");
-        test_loose_equal!(0, 0);
-        test_loose_equal!(0, -0);
-        test_loose_equal!(0, 0.0);
-        test_loose_equal!(0.2, 0.2);
-    }
-
-    #[test]
-    fn loose_equal_diff_type() {
-        test_loose_equal!([1, 2], "1,2");
-    }
-
-    #[test]
-    fn loose_not_equal() {
-        test_loose_not_equal!(0, &Value::Null);
-    }
-
-    #[test]
-    fn number_boolean() {
-        test_loose_equal!(-0, false);
-        test_loose_equal!(0, false);
-
-        test_loose_equal!(1, true);
-        test_loose_equal!(1.0, true);
-
-        test_loose_not_equal!(-1, true);
-        test_loose_not_equal!(0.1 + 0.2, false);
-    }
-
-    #[test]
-    fn number_string() {
-        test_loose_equal!("", 0);
-        test_loose_equal!("0", 0);
-        test_loose_equal!("-0", 0);
-        test_loose_equal!("+0", 0);
-        test_loose_equal!("0.0", 0);
-        test_loose_equal!("+0.0", 0);
-        test_loose_equal!("-0.0", 0);
-        test_loose_equal!("17", 17);
-        test_loose_equal!("-17", -17);
-        test_loose_equal!("   1 ", 1);
-        test_loose_equal!("   1.3 ", 1.3);
-    }
-
-    #[test]
-    fn array_bool() {
-        test_loose_equal!([1], true);
-        test_loose_equal!([true], true);
-    }
-
-    #[test]
-    fn string_bool() {
-        test_loose_equal!("", false);
-        test_loose_equal!("  ", false);
-        test_loose_equal!("0", false);
-        test_loose_equal!("  0 ", false);
-        test_loose_equal!("1", true);
-        test_loose_equal!(" 1  ", true);
-    }
-
-    #[test]
-    fn number_array() {
-        test_loose_equal!([1], 1);
-        test_loose_equal!([1.2], 1.2);
     }
 }

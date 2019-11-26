@@ -21,7 +21,9 @@ use super::Data;
 /// Represents a JsonLogic operator.
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Operator {
-    /// Tests equality, with type coercion. Requires two arguments.
+    /// Tests abstract equality as specified in
+    /// https://www.ecma-international.org/ecma-262/#sec-abstract-equality-comparison, with type
+    /// coercion. Requires two arguments.
     Equal,
     /// Tests strict equality. Requires two arguments.
     StrictEqual,
