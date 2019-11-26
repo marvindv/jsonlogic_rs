@@ -5,7 +5,7 @@ authors = ["Marvin Davieds <marvin.davieds@gmail.com>"]
 edition = "2018"
 license = "MIT"
 description = "A JsonLogic implementation in Rust"
-repository = "https://github.com/marvindv/jsonlogic-rust"
+repository = "https://github.com/marvindv/jsonlogic_rs"
 keywords = ["jsonlogic"]
 readme = "README.md"
 
