@@ -73,7 +73,8 @@ impl<'a> Data<'a> {
                         prev_step_char = Some(ch);
                         Some(data_part)
                     } else {
-                        // String data_part is not long enough.
+                        // String data_part is not long enough or data_part cannot be parsed into a
+                        // number.
                         return None;
                     }
                 }
