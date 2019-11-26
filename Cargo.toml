@@ -1,5 +1,5 @@
 [package]
-name = "jsonlogic-rust-test"
+name = "jsonlogic"
 version = "0.1.0"
 authors = ["Marvin Davieds <marvin.davieds@gmail.com>"]
 edition = "2018"
