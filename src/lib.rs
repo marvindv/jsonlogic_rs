@@ -9,17 +9,27 @@ use std::collections::HashSet;
 
 use data::Data;
 
-pub fn apply(json_logic: &Value) -> Result<Value, String> {
-    apply_with_data(json_logic, &Value::Null)
-}
-
-pub fn apply_with_data(json_logic: &Value, data: &Value) -> Result<Value, String> {
+/// Applies the given JsonLogic rule to the specified data.
+/// If the rule does not use any variables, you may pass `&Value::Null` as the second argument.
+///
+/// # Example
+///
+/// ```
+/// use serde_json::{json, Value};
+///
+/// let rule = json!({"===": [2, {"var": "foo"}]});
+/// assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 2 })), Ok(Value::Bool(true)));
+/// assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 3 })), Ok(Value::Bool(false)));
+/// ```
+pub fn apply(json_logic: &Value, data: &Value) -> Result<Value, String> {
     let ast = expression::Expression::from_json(json_logic)?;
     let data = Data::from_json(data);
     Ok(ast.compute(&data))
 }
 
-pub fn get_variable_names(json_logic: &Value) -> Result<HashSet<String>, String> {
+// TODO: Add to public api when ready.
+#[allow(dead_code)]
+fn get_variable_names(json_logic: &Value) -> Result<HashSet<String>, String> {
     let ast = expression::Expression::from_json(json_logic)?;
     ast.get_variable_names()
 }
@@ -33,13 +43,13 @@ mod tests {
     #[test]
     fn simple_values() {
         let num = json!(1);
-        assert_eq!(apply(&num), Ok(num));
+        assert_eq!(apply(&num, &Value::Null), Ok(num));
 
         let string = json!("foo");
-        assert_eq!(apply(&string), Ok(string));
+        assert_eq!(apply(&string, &Value::Null), Ok(string));
 
         let boolean = json!(true);
-        assert_eq!(apply(&boolean), Ok(boolean));
+        assert_eq!(apply(&boolean, &Value::Null), Ok(boolean));
     }
 
     #[test]
@@ -57,26 +67,44 @@ mod tests {
         use super::*;
 
         fn test_equality(a: &Value, b: &Value, expect: bool) {
-            assert_eq!(apply(&json!({ "==": [a, b] })), Ok(Value::Bool(expect)));
-            assert_eq!(apply(&json!({ "==": [b, a] })), Ok(Value::Bool(expect)));
+            assert_eq!(
+                apply(&json!({ "==": [a, b] }), &Value::Null),
+                Ok(Value::Bool(expect))
+            );
+            assert_eq!(
+                apply(&json!({ "==": [b, a] }), &Value::Null),
+                Ok(Value::Bool(expect))
+            );
         }
 
         #[test]
         fn simple_equality() {
-            assert_eq!(apply(&json!({ "==": [] })), Ok(Value::Bool(true)));
+            assert_eq!(
+                apply(&json!({ "==": [] }), &Value::Null),
+                Ok(Value::Bool(true))
+            );
             // For whatever reason the javascript implementation returns true for `null` instead of an
             // array as the argument.
-            assert_eq!(apply(&json!({ "==": Value::Null })), Ok(Value::Bool(true)));
             assert_eq!(
-                apply(&json!({ "==": [Value::Null] })),
+                apply(&json!({ "==": Value::Null }), &Value::Null),
+                Ok(Value::Bool(true))
+            );
+            assert_eq!(
+                apply(&json!({ "==": [Value::Null] }), &Value::Null),
                 Ok(Value::Bool(true))
             );
             test_equality(&json!(null), &json!(null), true);
             test_equality(&json!(1), &json!(1), true);
             test_equality(&json!("foo"), &json!("foo"), true);
 
-            assert_eq!(apply(&json!({ "==": 0 })), Ok(Value::Bool(false)));
-            assert_eq!(apply(&json!({ "==": [0] })), Ok(Value::Bool(false)));
+            assert_eq!(
+                apply(&json!({ "==": 0 }), &Value::Null),
+                Ok(Value::Bool(false))
+            );
+            assert_eq!(
+                apply(&json!({ "==": [0] }), &Value::Null),
+                Ok(Value::Bool(false))
+            );
             test_equality(&json!(1), &json!(0), false);
         }
 
@@ -97,17 +125,17 @@ mod tests {
         #[test]
         fn simple() {
             assert_eq!(
-                apply_with_data(&json!({ "var": "a" }), &json!({ "a": 12, "b": 24 })),
+                apply(&json!({ "var": "a" }), &json!({ "a": 12, "b": 24 })),
                 Ok(json!(12))
             );
 
             assert_eq!(
-                apply_with_data(&json!({ "var": ["a"] }), &json!({ "a": 12, "b": 24 })),
+                apply(&json!({ "var": ["a"] }), &json!({ "a": 12, "b": 24 })),
                 Ok(json!(12))
             );
 
             assert_eq!(
-                apply_with_data(
+                apply(
                     &json!({
                         "==": [
                             { "var": "var1" },
@@ -123,11 +151,11 @@ mod tests {
         #[test]
         fn default() {
             assert_eq!(
-                apply_with_data(&json!({ "var": ["nope"] }), &json!({ "a": 12, "b": 24 })),
+                apply(&json!({ "var": ["nope"] }), &json!({ "a": 12, "b": 24 })),
                 Ok(json!(null))
             );
             assert_eq!(
-                apply_with_data(&json!({ "var": ["nope", 5] }), &json!({ "a": 12, "b": 24 })),
+                apply(&json!({ "var": ["nope", 5] }), &json!({ "a": 12, "b": 24 })),
                 Ok(json!(5))
             );
         }
@@ -147,7 +175,7 @@ mod tests {
             });
 
             assert_eq!(
-                apply_with_data(
+                apply(
                     &logic,
                     &json!({
                         "var1": "foo",
@@ -158,7 +186,7 @@ mod tests {
             );
 
             assert_eq!(
-                apply_with_data(
+                apply(
                     &logic,
                     &json!({
                         "var1": "foo",
@@ -175,26 +203,50 @@ mod tests {
         use super::*;
 
         fn test_not_equal(a: &Value, b: &Value, expect: bool) {
-            assert_eq!(apply(&json!({ "!=": [a, b] })), Ok(Value::Bool(expect)));
-            assert_eq!(apply(&json!({ "!=": [b, a] })), Ok(Value::Bool(expect)));
+            assert_eq!(
+                apply(&json!({ "!=": [a, b] }), &Value::Null),
+                Ok(Value::Bool(expect))
+            );
+            assert_eq!(
+                apply(&json!({ "!=": [b, a] }), &Value::Null),
+                Ok(Value::Bool(expect))
+            );
         }
 
         #[test]
         fn simple_not_equal() {
-            assert_eq!(apply(&json!({ "!=": [] })), Ok(Value::Bool(false)));
-            assert_eq!(apply(&json!({ "!=": Value::Null })), Ok(Value::Bool(false)));
             assert_eq!(
-                apply(&json!({ "!=": [Value::Null] })),
+                apply(&json!({ "!=": [] }), &Value::Null),
                 Ok(Value::Bool(false))
             );
-            assert_eq!(apply(&json!({ "!=": "foo" })), Ok(Value::Bool(true)));
-            assert_eq!(apply(&json!({ "!=": ["foo"] })), Ok(Value::Bool(true)));
+            assert_eq!(
+                apply(&json!({ "!=": Value::Null }), &Value::Null),
+                Ok(Value::Bool(false))
+            );
+            assert_eq!(
+                apply(&json!({ "!=": [Value::Null] }), &Value::Null),
+                Ok(Value::Bool(false))
+            );
+            assert_eq!(
+                apply(&json!({ "!=": "foo" }), &Value::Null),
+                Ok(Value::Bool(true))
+            );
+            assert_eq!(
+                apply(&json!({ "!=": ["foo"] }), &Value::Null),
+                Ok(Value::Bool(true))
+            );
             test_not_equal(&json!(null), &json!(null), false);
             test_not_equal(&json!(1), &json!(1), false);
             test_not_equal(&json!("foo"), &json!("foo"), false);
 
-            assert_eq!(apply(&json!({ "!=": 0 })), Ok(Value::Bool(true)));
-            assert_eq!(apply(&json!({ "!=": [0] })), Ok(Value::Bool(true)));
+            assert_eq!(
+                apply(&json!({ "!=": 0 }), &Value::Null),
+                Ok(Value::Bool(true))
+            );
+            assert_eq!(
+                apply(&json!({ "!=": [0] }), &Value::Null),
+                Ok(Value::Bool(true))
+            );
             test_not_equal(&json!(1), &json!(0), true);
         }
 
@@ -213,25 +265,40 @@ mod tests {
         use super::*;
 
         fn test_strict_equality(a: &Value, b: &Value, expect: bool) {
-            assert_eq!(apply(&json!({ "===": [a, b] })), Ok(Value::Bool(expect)));
+            assert_eq!(
+                apply(&json!({ "===": [a, b] }), &Value::Null),
+                Ok(Value::Bool(expect))
+            );
         }
 
         #[test]
         fn simple_strict_equality() {
-            assert_eq!(apply(&json!({ "===": [] })), Ok(Value::Bool(true)));
+            assert_eq!(
+                apply(&json!({ "===": [] }), &Value::Null),
+                Ok(Value::Bool(true))
+            );
             // For whatever reason the javascript implementation returns true for `null` instead of an
             // array as the argument.
-            assert_eq!(apply(&json!({ "===": Value::Null })), Ok(Value::Bool(true)));
             assert_eq!(
-                apply(&json!({ "===": [Value::Null] })),
+                apply(&json!({ "===": Value::Null }), &Value::Null),
+                Ok(Value::Bool(true))
+            );
+            assert_eq!(
+                apply(&json!({ "===": [Value::Null] }), &Value::Null),
                 Ok(Value::Bool(true))
             );
             test_strict_equality(&json!(null), &json!(null), true);
             test_strict_equality(&json!(1), &json!(1), true);
             test_strict_equality(&json!("foo"), &json!("foo"), true);
 
-            assert_eq!(apply(&json!({ "===": 0 })), Ok(Value::Bool(false)));
-            assert_eq!(apply(&json!({ "===": [0] })), Ok(Value::Bool(false)));
+            assert_eq!(
+                apply(&json!({ "===": 0 }), &Value::Null),
+                Ok(Value::Bool(false))
+            );
+            assert_eq!(
+                apply(&json!({ "===": [0] }), &Value::Null),
+                Ok(Value::Bool(false))
+            );
             test_strict_equality(&json!(1), &json!(0), false);
         }
 
@@ -250,28 +317,46 @@ mod tests {
         use super::*;
 
         fn test_strict_not_equal(a: &Value, b: &Value, expect: bool) {
-            assert_eq!(apply(&json!({ "!==": [a, b] })), Ok(Value::Bool(expect)));
+            assert_eq!(
+                apply(&json!({ "!==": [a, b] }), &Value::Null),
+                Ok(Value::Bool(expect))
+            );
         }
 
         #[test]
         fn simple_strict_equality() {
-            assert_eq!(apply(&json!({ "!==": [] })), Ok(Value::Bool(false)));
             assert_eq!(
-                apply(&json!({ "!==": Value::Null })),
+                apply(&json!({ "!==": [] }), &Value::Null),
                 Ok(Value::Bool(false))
             );
             assert_eq!(
-                apply(&json!({ "!==": [Value::Null] })),
+                apply(&json!({ "!==": Value::Null }), &Value::Null),
                 Ok(Value::Bool(false))
             );
-            assert_eq!(apply(&json!({ "!==": "foo" })), Ok(Value::Bool(true)));
-            assert_eq!(apply(&json!({ "!==": ["foo"] })), Ok(Value::Bool(true)));
+            assert_eq!(
+                apply(&json!({ "!==": [Value::Null] }), &Value::Null),
+                Ok(Value::Bool(false))
+            );
+            assert_eq!(
+                apply(&json!({ "!==": "foo" }), &Value::Null),
+                Ok(Value::Bool(true))
+            );
+            assert_eq!(
+                apply(&json!({ "!==": ["foo"] }), &Value::Null),
+                Ok(Value::Bool(true))
+            );
             test_strict_not_equal(&json!(null), &json!(null), false);
             test_strict_not_equal(&json!(1), &json!(1), false);
             test_strict_not_equal(&json!("foo"), &json!("foo"), false);
 
-            assert_eq!(apply(&json!({ "!==": 0 })), Ok(Value::Bool(true)));
-            assert_eq!(apply(&json!({ "!==": [0] })), Ok(Value::Bool(true)));
+            assert_eq!(
+                apply(&json!({ "!==": 0 }), &Value::Null),
+                Ok(Value::Bool(true))
+            );
+            assert_eq!(
+                apply(&json!({ "!==": [0] }), &Value::Null),
+                Ok(Value::Bool(true))
+            );
             test_strict_not_equal(&json!(1), &json!(0), true);
         }
 
@@ -297,10 +382,7 @@ mod tests {
               "gas"
             ]});
 
-            assert_eq!(
-                apply_with_data(&logic, &json!({ "temp": 50 })),
-                Ok(json!("liquid"))
-            );
+            assert_eq!(apply(&logic, &json!({ "temp": 50 })), Ok(json!("liquid")));
         }
     }
 
@@ -312,58 +394,82 @@ mod tests {
             // The javascript implementation returns `undefined` for this case but `null` should be
             // fine here.
             assert_eq!(
-                apply(&json!({
-                    "or": []
-                })),
+                apply(
+                    &json!({
+                        "or": []
+                    }),
+                    &Value::Null
+                ),
                 Ok(Value::Null)
             );
 
             assert_eq!(
-                apply(&json!({
-                    "or": [false]
-                })),
+                apply(
+                    &json!({
+                        "or": [false]
+                    }),
+                    &Value::Null
+                ),
                 Ok(Value::Bool(false))
             );
 
             assert_eq!(
-                apply(&json!({
-                    "or": [""]
-                })),
+                apply(
+                    &json!({
+                        "or": [""]
+                    }),
+                    &Value::Null
+                ),
                 Ok(json!(""))
             );
 
             assert_eq!(
-                apply(&json!({
-                    "or": ["foo"]
-                })),
+                apply(
+                    &json!({
+                        "or": ["foo"]
+                    }),
+                    &Value::Null
+                ),
                 Ok(json!("foo"))
             );
 
             assert_eq!(
-                apply(&json!({
-                    "or": [false, "", 0]
-                })),
+                apply(
+                    &json!({
+                        "or": [false, "", 0]
+                    }),
+                    &Value::Null
+                ),
                 Ok(json!(0))
             );
 
             assert_eq!(
-                apply(&json!({
-                    "or": [false, "", 0, true, false]
-                })),
+                apply(
+                    &json!({
+                        "or": [false, "", 0, true, false]
+                    }),
+                    &Value::Null
+                ),
                 Ok(Value::Bool(true))
             );
 
             assert_eq!(
-                apply(&json!({
-                    "or": [false, "", 0, true, "foo", false]
-                })),
+                apply(
+                    &json!({
+                        "or": [false, "", 0, true, "foo", false]
+                    }),
+                    &Value::Null
+                ),
                 Ok(Value::Bool(true))
             );
 
             assert_eq!(
-                apply(&json!({
-                    "or": [false, "", 0, "foo", true, false]
-                })),
+                apply(
+                    &json!({
+                        "or": [false, "", 0, "foo", true, false]
+                    }),
+                    &Value::Null
+                ),
                 Ok(json!("foo"))
             );
         }
@@ -374,12 +480,27 @@ mod tests {
 
         #[test]
         fn test() {
-            assert_eq!(apply(&json!({"and": []})), Ok(json!(null)));
-            assert_eq!(apply(&json!({"and": [true, true]})), Ok(json!(true)));
-            assert_eq!(apply(&json!({"and": [true, false]})), Ok(json!(false)));
-            assert_eq!(apply(&json!({"and": [true, ""]})), Ok(json!("")));
-            assert_eq!(apply(&json!({"and": [true, "a", 3]})), Ok(json!(3)));
-            assert_eq!(apply(&json!({"and": [true, "", 3]})), Ok(json!("")));
+            assert_eq!(apply(&json!({"and": []}), &Value::Null), Ok(json!(null)));
+            assert_eq!(
+                apply(&json!({"and": [true, true]}), &Value::Null),
+                Ok(json!(true))
+            );
+            assert_eq!(
+                apply(&json!({"and": [true, false]}), &Value::Null),
+                Ok(json!(false))
+            );
+            assert_eq!(
+                apply(&json!({"and": [true, ""]}), &Value::Null),
+                Ok(json!(""))
+            );
+            assert_eq!(
+                apply(&json!({"and": [true, "a", 3]}), &Value::Null),
+                Ok(json!(3))
+            );
+            assert_eq!(
+                apply(&json!({"and": [true, "", 3]}), &Value::Null),
+                Ok(json!(""))
+            );
         }
     }
 
@@ -389,15 +510,21 @@ mod tests {
         #[test]
         fn test() {
             // Only simple tests here, the hardcore coercion tests are in the logic.rs file.
-            assert_eq!(apply(&json!({"<": []})), Ok(json!(false)));
-            assert_eq!(apply(&json!({"<": [1]})), Ok(json!(false)));
-            assert_eq!(apply(&json!({"<": [1, 2]})), Ok(json!(true)));
-            assert_eq!(apply(&json!({"<": [2, 1]})), Ok(json!(false)));
-            assert_eq!(apply(&json!({">": [2, 1]})), Ok(json!(true)));
-            assert_eq!(apply(&json!({">=": [2, 2]})), Ok(json!(true)));
-            assert_eq!(apply(&json!({">=": [2, 3]})), Ok(json!(false)));
-            assert_eq!(apply(&json!({"<=": [2, 2]})), Ok(json!(true)));
-            assert_eq!(apply(&json!({"<=": [3, 2]})), Ok(json!(false)));
+            assert_eq!(apply(&json!({"<": []}), &Value::Null), Ok(json!(false)));
+            assert_eq!(apply(&json!({"<": [1]}), &Value::Null), Ok(json!(false)));
+            assert_eq!(apply(&json!({"<": [1, 2]}), &Value::Null), Ok(json!(true)));
+            assert_eq!(apply(&json!({"<": [2, 1]}), &Value::Null), Ok(json!(false)));
+            assert_eq!(apply(&json!({">": [2, 1]}), &Value::Null), Ok(json!(true)));
+            assert_eq!(apply(&json!({">=": [2, 2]}), &Value::Null), Ok(json!(true)));
+            assert_eq!(
+                apply(&json!({">=": [2, 3]}), &Value::Null),
+                Ok(json!(false))
+            );
+            assert_eq!(apply(&json!({"<=": [2, 2]}), &Value::Null), Ok(json!(true)));
+            assert_eq!(
+                apply(&json!({"<=": [3, 2]}), &Value::Null),
+                Ok(json!(false))
+            );
         }
     }
 }
