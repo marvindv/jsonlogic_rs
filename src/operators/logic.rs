@@ -29,47 +29,46 @@ pub fn is_strict_equal(a: &Value, b: &Value) -> bool {
 
 // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness
 // and https://www.ecma-international.org/ecma-262/#sec-abstract-equality-comparison
+#[allow(clippy::float_cmp)]
 pub fn is_abstract_equal(a: &Value, b: &Value) -> bool {
     use Value::*;
 
     match (a, b) {
-        // a==b iff a=b=null or a,b != null
-        (Null, Null) => true,
+        // 1. Strict equal for same types.
+        (Array(_), Array(_))
+        | (Bool(_), Bool(_))
+        | (Null, Null)
+        | (Number(_), Number(_))
+        | (Object(_), Object(_))
+        | (String(_), String(_)) => is_strict_equal(a, b),
+        // short-circuit only one operand being null
         (Null, _) | (_, Null) => false,
-        // An object is never equal to something else, including another object.
+        // 4. If Type(a) is number and Type(b) is string, return a == ToNumber(b).
+        (Number(a), String(_)) => coerce_to_f64(b)
+            .map(|b| a.as_f64().unwrap() == b)
+            .unwrap_or(false),
+        // 5. If Type(a) is string and Type(b) is number, return ToNumber(a) == b.
+        (String(_), Number(b)) => coerce_to_f64(a)
+            .map(|a| a == b.as_f64().unwrap())
+            .unwrap_or(false),
+        // 6. If Type(a) is bool return ToNumber(a)==b
+        (Bool(_), _) => coerce_to_f64(a)
+            .map(|a| is_abstract_equal(&Value::Number(serde_json::Number::from_f64(a).unwrap()), b))
+            .unwrap_or(false),
+        // 7. If Type(b) is bool return a==ToNumber(b)
+        (_, Bool(_)) => coerce_to_f64(b)
+            .map(|b| is_abstract_equal(a, &Value::Number(serde_json::Number::from_f64(b).unwrap())))
+            .unwrap_or(false),
+        // 8. something with object
+        // if non array object:
+        //   An object is never equal to something else, including another object, since
+        //   ToPrimitive(object) does not work for json.
         (Object(_), _) | (_, Object(_)) => false,
-        // Same types
-        (Number(a), Number(b)) => equal_numbers(a, b),
-        (String(a), String(b)) => a == b,
-        (Bool(a), Bool(b)) => a == b,
-        (Array(_), Array(_)) => a == b,
-        // Number == String <=> String == Number
-        (Number(a), String(b)) | (String(b), Number(a)) => equal_number_string(a, b),
-        // Number == Bool <=> Bool == Number
-        (Number(a), Bool(b)) | (Bool(b), Number(a)) => equal_number_boolean(a, *b),
-        // String == Bool <=> Bool == String
-        (String(a), Bool(b)) | (Bool(b), String(a)) => equal_string_boolean(a, *b),
-        // String == Array <=> Array == String
-        (String(a), Array(_)) => a == &coerce_to_str(b),
-        (Array(_), String(b)) => b == &coerce_to_str(a),
-        // Bool == Array <=> Array == Bool
-        (Bool(a), Array(_)) => equal_array_bool(b, *a),
-        (Array(_), Bool(b)) => equal_array_bool(a, *b),
-        // Number == Array <=> Array == Number
-        (Number(a), Array(_)) => equal_number_array(a, b),
-        (Array(_), Number(b)) => equal_number_array(b, a),
-    }
-}
-
-#[allow(clippy::float_cmp)]
-fn equal_numbers(a: &Number, b: &Number) -> bool {
-    // Avoid float compare if possible.
-    if a.is_u64() && b.is_u64() {
-        a.as_u64().unwrap() == b.as_u64().unwrap()
-    } else if a.is_i64() && b.is_i64() {
-        a.as_i64().unwrap() == b.as_i64().unwrap()
-    } else {
-        a.as_f64().unwrap() == b.as_f64().unwrap()
+        // if array:
+        //   the only possible operand types that are still possible are Number and String
+        (String(a), Array(b)) | (Array(b), String(a)) => a == &arr_to_primitive_str(b),
+        (Number(_), Array(b)) => is_abstract_equal(a, &Value::String(arr_to_primitive_str(b))),
+        (Array(a), Number(_)) => is_abstract_equal(&Value::String(arr_to_primitive_str(a)), b),
     }
 }
 
@@ -108,85 +107,22 @@ pub fn greater_equal_than(a: &Value, b: &Value) -> bool {
     !less_than(a, b)
 }
 
-fn equal_array_bool(array_val: &Value, bool_val: bool) -> bool {
-    let arr_str = coerce_to_str(array_val);
-    match str_to_u64(&arr_str) {
-        // This matches for arrays [1] or [0], ... or [100] of course.
-        Some(arr_num) => equal_u64_boolean(arr_num, bool_val),
-        // If it is not a number, interpret as a string. Might be [true] or [false].
-        None => arr_str == "true",
-    }
-}
-
 #[allow(clippy::float_cmp)]
-fn equal_number_string(number_val: &Number, str_val: &str) -> bool {
-    let num1 = number_val.as_f64().unwrap();
-    let str_val = str_val.trim();
-    // `0 == ""`
-    if str_val == "" {
-        return num1 == 0f64;
-    }
-
-    if let Ok(num2) = str_val.parse::<f64>() {
-        num1 == num2
+fn equal_numbers(a: &Number, b: &Number) -> bool {
+    // Avoid float compare if possible.
+    if a.is_u64() && b.is_u64() {
+        a.as_u64().unwrap() == b.as_u64().unwrap()
+    } else if a.is_i64() && b.is_i64() {
+        a.as_i64().unwrap() == b.as_i64().unwrap()
     } else {
-        false
-    }
-}
-
-fn equal_number_boolean(number_val: &Number, bool_val: bool) -> bool {
-    let num1 = number_val.as_f64().unwrap();
-    if num1.fract() != 0f64 || num1 < 0f64 {
-        return false;
-    }
-
-    equal_u64_boolean(num1 as u64, bool_val)
-}
-
-fn equal_u64_boolean(num1: u64, bool_val: bool) -> bool {
-    let num2 = bool_to_u64(bool_val);
-    num1 == num2
-}
-
-fn equal_string_boolean(string_val: &str, bool_val: bool) -> bool {
-    let num2 = bool_to_u64(bool_val);
-    match str_to_u64(string_val) {
-        Some(num1) => num1 == num2,
-        None => false,
-    }
-}
-
-fn equal_number_array(number_val: &Number, array_val: &Value) -> bool {
-    let num1 = number_val.to_string();
-    let num2 = coerce_to_str(array_val);
-    num1 == num2
-}
-
-fn str_to_u64(s: &str) -> Option<u64> {
-    let s = s.trim();
-    if s == "" {
-        return Some(0);
-    }
-
-    s.parse::<u64>().ok()
-}
-
-fn bool_to_u64(b: bool) -> u64 {
-    if b {
-        1
-    } else {
-        0
+        a.as_f64().unwrap() == b.as_f64().unwrap()
     }
 }
 
 /// The javascript operation `String(val)`.
 fn coerce_to_str(val: &Value) -> String {
     match val {
-        Value::Array(arr) => arr
-            .iter()
-            .map(|el| coerce_to_str(el))
-            .collect::<Vec<String>>()
-            .join(","),
+        Value::Array(arr) => arr_to_primitive_str(arr),
         Value::Bool(b) => b.to_string(),
         Value::Null => String::from("null"),
         Value::Number(num) => num.to_string(),
@@ -195,7 +131,7 @@ fn coerce_to_str(val: &Value) -> String {
     }
 }
 
-/// `Number(val)` in javascript
+/// `Number(val)` in javascript or as named in the standard `ToNumber(val)`.
 fn coerce_to_f64(val: &Value) -> Option<f64> {
     match val {
         Value::Array(arr) => match &arr[..] {
@@ -223,6 +159,16 @@ fn coerce_to_f64(val: &Value) -> Option<f64> {
             }
         }
     }
+}
+
+// In the end this is 7.1.1.1 OrdinaryToPrimitive for array(-objects)
+// from https://www.ecma-international.org/ecma-262/#sec-ordinarytoprimitive with hint=number
+// but in the end it boils down to arr.toString()
+fn arr_to_primitive_str(arr: &[Value]) -> String {
+    arr.iter()
+        .map(|el| coerce_to_str(el))
+        .collect::<Vec<String>>()
+        .join(",")
 }
 
 #[cfg(test)]
@@ -361,7 +307,7 @@ mod tests {
         #[test]
         fn array_bool() {
             test_abstract_equal!([1], true);
-            test_abstract_equal!([true], true);
+            test_abstract_not_equal!([true], true);
         }
         #[test]
         fn string_bool() {
@@ -583,6 +529,7 @@ mod tests {
         assert_eq!(coerce_to_str(&json!(true)), "true");
         assert_eq!(coerce_to_str(&json!(false)), "false");
         assert_eq!(coerce_to_str(&json!([false])), "false");
+        assert_eq!(coerce_to_str(&json!([true])), "true");
         assert_eq!(coerce_to_str(&json!(null)), "null");
         assert_eq!(coerce_to_str(&json!({})), "[object Object]");
 
