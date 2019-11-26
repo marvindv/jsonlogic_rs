@@ -72,6 +72,7 @@ pub fn is_abstract_equal(a: &Value, b: &Value) -> bool {
     }
 }
 
+// See https://www.ecma-international.org/ecma-262/#sec-abstract-relational-comparison
 pub fn less_than(a: &Value, b: &Value) -> bool {
     use Value::*;
 
@@ -82,10 +83,13 @@ pub fn less_than(a: &Value, b: &Value) -> bool {
         (Object(_), _) | (_, Object(_)) => false,
         (String(a), String(b)) => a < b,
         // Combinations where both operands will be coerced to strings:
+        //   Arrays will be converted to a primitive (i.e. a string). (1.)
+        //   Strings will be compared lexically. (3.)
         (Array(_), Array(_)) | (Array(_), String(_)) | (String(_), Array(_)) => {
             coerce_to_str(a) < coerce_to_str(b)
         }
         // Combinations where both operands will be coerced to numbers:
+        //   In every other combination the operands will be converted to numbers in the end. (4.)
         (Null, _) | (_, Null) | (Number(_), _) | (_, Number(_)) | (Bool(_), _) | (_, Bool(_)) => {
             match (coerce_to_f64(a), coerce_to_f64(b)) {
                 (Some(a), Some(b)) => a < b,
