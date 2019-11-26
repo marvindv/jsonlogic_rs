@@ -3,6 +3,11 @@ name = "jsonlogic"
 version = "0.1.0"
 authors = ["Marvin Davieds <marvin.davieds@gmail.com>"]
 edition = "2018"
+license = "MIT"
+description = "A JsonLogic implementation in Rust"
+repository = "https://github.com/marvindv/jsonlogic-rust"
+keywords = ["jsonlogic"]
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
