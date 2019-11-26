@@ -102,18 +102,19 @@ impl<'a> Data<'a> {
     /// Extracts a value from the given data by index. Data can either be an array, a string or an
     /// object containing the stringified index as a key. Otherwise returns `None`.
     fn by_number(&self, num: &Number) -> Option<Value> {
-        num.as_u64()
-            .and_then(|index| usize::try_from(index).ok())
-            .and_then(|index| match self.0 {
-                // Get the element at the given index or Null if there is none.
-                Value::Array(arr) => arr.get(index).cloned(),
-                // Get the value associated to the key stringified index or Null if there is none.
-                Value::Object(obj) => obj.get(&index.to_string()).cloned(),
-                // Get the n-th character from the string (where n is index) or Null if the string
-                // is not long enough.
-                Value::String(s) => s.chars().nth(index).map(|ch| Value::String(ch.to_string())),
-                _ => None,
-            })
+        match self.0 {
+            Value::Array(arr) => num
+                .as_u64()
+                .and_then(|index| usize::try_from(index).ok())
+                .and_then(|index| arr.get(index).cloned()),
+            Value::Object(obj) => obj.get(&num.to_string()).cloned(),
+            Value::String(s) => num
+                .as_u64()
+                .and_then(|index| usize::try_from(index).ok())
+                .and_then(|index| s.chars().nth(index))
+                .map(|ch| Value::String(ch.to_string())),
+            _ => None,
+        }
     }
 }
 
