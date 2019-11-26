@@ -12,6 +12,21 @@ pub fn is_truthy(value: &Value) -> bool {
     }
 }
 
+/// See https://www.ecma-international.org/ecma-262/#sec-strict-equality-comparison
+pub fn is_strict_equal(a: &Value, b: &Value) -> bool {
+    use Value::*;
+
+    match (a, b) {
+        (Array(_), Array(_)) => false,
+        (Bool(a), Bool(b)) => a == b,
+        (Null, Null) => true,
+        (Number(a), Number(b)) => equal_numbers(a, b),
+        (Object(_), Object(_)) => false,
+        (String(a), String(b)) => a == b,
+        _ => false,
+    }
+}
+
 // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness
 // and https://www.ecma-international.org/ecma-262/#sec-abstract-equality-comparison
 pub fn is_abstract_equal(a: &Value, b: &Value) -> bool {
@@ -214,6 +229,77 @@ fn coerce_to_f64(val: &Value) -> Option<f64> {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    mod strict_equal {
+        use super::*;
+
+        macro_rules! test_strict_equal {
+            ($a:expr, $b:expr) => {
+                assert!(is_strict_equal(&json!($a), &json!($b)));
+                assert!(is_strict_equal(&json!($b), &json!($a)));
+            };
+        }
+
+        macro_rules! test_strict_not_equal {
+            ($a:expr, $b:expr) => {
+                assert!(!is_strict_equal(&json!($a), &json!($b)));
+                assert!(!is_strict_equal(&json!($b), &json!($a)));
+            };
+        }
+
+        #[test]
+        fn same_type_string() {
+            test_strict_equal!("", "");
+            test_strict_not_equal!(" ", "");
+            test_strict_equal!("a", "a");
+            test_strict_not_equal!("a", "b");
+        }
+
+        #[test]
+        fn same_type_number() {
+            test_strict_equal!(0, 0);
+            test_strict_equal!(0, 0.0);
+            test_strict_equal!(-0, 0);
+            test_strict_not_equal!(-1, 1);
+            test_strict_not_equal!(1.1, 1);
+        }
+
+        #[test]
+        fn same_type_bool() {
+            test_strict_equal!(true, true);
+            test_strict_equal!(false, false);
+            test_strict_not_equal!(false, true);
+        }
+
+        #[test]
+        fn same_type_object() {
+            assert!(!is_strict_equal(&json!({}), &json!({}),));
+            assert!(!is_strict_equal(
+                &json!({"foo": "bar"}),
+                &json!({"foo": "bar"}),
+            ));
+            assert!(!is_strict_equal(
+                &json!({"foo": "bar"}),
+                &json!({"foo":  1}),
+            ));
+        }
+
+        #[test]
+        fn same_type_array() {
+            assert!(!is_strict_equal(&json!([]), &json!([])));
+            assert!(!is_strict_equal(&json!([1]), &json!([1])));
+            assert!(!is_strict_equal(&json!([1]), &json!([2])));
+        }
+
+        #[test]
+        fn different_type() {
+            test_strict_not_equal!("", 0);
+            test_strict_not_equal!("1", 1);
+            test_strict_not_equal!("true", true);
+            test_strict_not_equal!(1, true);
+            assert!(!is_strict_equal(&json!(null), &json!(false)));
+        }
+    }
 
     mod abstract_equal {
         use super::*;
