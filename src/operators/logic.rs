@@ -23,7 +23,7 @@ pub fn is_loose_equal(a: &Value, b: &Value) -> bool {
         // An object is never equal to something else, including another object.
         (Object(_), _) | (_, Object(_)) => false,
         // Same types
-        (Number(a), Number(b)) => a == b,
+        (Number(a), Number(b)) => equal_numbers(a, b),
         (String(a), String(b)) => a == b,
         (Bool(a), Bool(b)) => a == b,
         (Array(_), Array(_)) => a == b,
@@ -42,6 +42,18 @@ pub fn is_loose_equal(a: &Value, b: &Value) -> bool {
         // Number == Array <=> Array == Number
         (Number(a), Array(_)) => equal_number_array(a, b),
         (Array(_), Number(b)) => equal_number_array(b, a),
+    }
+}
+
+#[allow(clippy::float_cmp)]
+fn equal_numbers(a: &Number, b: &Number) -> bool {
+    // Avoid float compare if possible.
+    if a.is_u64() && b.is_u64() {
+        a.as_u64().unwrap() == b.as_u64().unwrap()
+    } else if a.is_i64() && b.is_i64() {
+        a.as_i64().unwrap() == b.as_i64().unwrap()
+    } else {
+        a.as_f64().unwrap() == b.as_f64().unwrap()
     }
 }
 
@@ -90,15 +102,19 @@ fn equal_array_bool(array_val: &Value, bool_val: bool) -> bool {
     }
 }
 
+#[allow(clippy::float_cmp)]
 fn equal_number_string(number_val: &Number, str_val: &str) -> bool {
-    let num1 = number_val.as_f64().unwrap().to_string();
-    let num2 = str_val.trim();
+    let num1 = number_val.as_f64().unwrap();
+    let str_val = str_val.trim();
+    // `0 == ""`
+    if str_val == "" {
+        return num1 == 0f64;
+    }
 
-    // case for `0 == ""`
-    if num2 == "" {
-        num1 == "0"
-    } else {
+    if let Ok(num2) = str_val.parse::<f64>() {
         num1 == num2
+    } else {
+        false
     }
 }
 
@@ -163,6 +179,7 @@ fn coerce_to_str(val: &Value) -> String {
     }
 }
 
+/// `Number(val)` in javascript
 fn coerce_to_f64(val: &Value) -> Option<f64> {
     match val {
         Value::Array(arr) => match &arr[..] {
@@ -450,6 +467,9 @@ mod tests {
         test_loose_equal!(false, false);
         test_loose_equal!("foo", "foo");
         test_loose_equal!(0, 0);
+        test_loose_equal!(0, -0);
+        test_loose_equal!(0, 0.0);
+        test_loose_equal!(0.2, 0.2);
     }
 
     #[test]
@@ -478,6 +498,11 @@ mod tests {
     fn number_string() {
         test_loose_equal!("", 0);
         test_loose_equal!("0", 0);
+        test_loose_equal!("-0", 0);
+        test_loose_equal!("+0", 0);
+        test_loose_equal!("0.0", 0);
+        test_loose_equal!("+0.0", 0);
+        test_loose_equal!("-0.0", 0);
         test_loose_equal!("17", 17);
         test_loose_equal!("-17", -17);
         test_loose_equal!("   1 ", 1);
