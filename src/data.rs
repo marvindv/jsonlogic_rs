@@ -21,7 +21,7 @@ impl<'a> Data<'a> {
         self.0
     }
 
-    /// Trys to get part of the encapsulate data by the given path.
+    /// Tries to get part of the encapsulate data by the given path.
     ///
     /// The path may be either a json string or a number.
     /// The string may contain multiple steps (separated by a dot) to acccess nested values inside
