@@ -6,7 +6,7 @@ To use this library, add
 
 ```toml
 [dependencies]
-jsonlogic = "0.1"
+jsonlogic = "0.2"
 ```
 
 to your `Cargo.toml`.

@@ -1,6 +1,6 @@
 [package]
 name = "jsonlogic"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["Marvin Davieds <marvin.davieds@gmail.com>"]
 edition = "2018"
 license = "MIT"
