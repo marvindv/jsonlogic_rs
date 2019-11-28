@@ -111,32 +111,8 @@ pub fn greater_equal_than(a: &Value, b: &Value) -> bool {
     !less_than(a, b)
 }
 
-#[allow(clippy::float_cmp)]
-fn equal_numbers(a: &Number, b: &Number) -> bool {
-    // Avoid float compare if possible.
-    if a.is_u64() && b.is_u64() {
-        a.as_u64().unwrap() == b.as_u64().unwrap()
-    } else if a.is_i64() && b.is_i64() {
-        a.as_i64().unwrap() == b.as_i64().unwrap()
-    } else {
-        a.as_f64().unwrap() == b.as_f64().unwrap()
-    }
-}
-
-/// The javascript operation `String(val)`.
-fn coerce_to_str(val: &Value) -> String {
-    match val {
-        Value::Array(arr) => arr_to_primitive_str(arr),
-        Value::Bool(b) => b.to_string(),
-        Value::Null => String::from("null"),
-        Value::Number(num) => num.to_string(),
-        Value::Object(_) => String::from("[object Object]"),
-        Value::String(s) => s.to_string(),
-    }
-}
-
 /// `Number(val)` in javascript or as named in the standard `ToNumber(val)`.
-fn coerce_to_f64(val: &Value) -> Option<f64> {
+pub fn coerce_to_f64(val: &Value) -> Option<f64> {
     match val {
         Value::Array(arr) => match &arr[..] {
             [] => Some(0f64),
@@ -162,6 +138,30 @@ fn coerce_to_f64(val: &Value) -> Option<f64> {
                 s.parse::<f64>().ok()
             }
         }
+    }
+}
+
+#[allow(clippy::float_cmp)]
+fn equal_numbers(a: &Number, b: &Number) -> bool {
+    // Avoid float compare if possible.
+    if a.is_u64() && b.is_u64() {
+        a.as_u64().unwrap() == b.as_u64().unwrap()
+    } else if a.is_i64() && b.is_i64() {
+        a.as_i64().unwrap() == b.as_i64().unwrap()
+    } else {
+        a.as_f64().unwrap() == b.as_f64().unwrap()
+    }
+}
+
+/// The javascript operation `String(val)`.
+fn coerce_to_str(val: &Value) -> String {
+    match val {
+        Value::Array(arr) => arr_to_primitive_str(arr),
+        Value::Bool(b) => b.to_string(),
+        Value::Null => String::from("null"),
+        Value::Number(num) => num.to_string(),
+        Value::Object(_) => String::from("[object Object]"),
+        Value::String(s) => s.to_string(),
     }
 }
 
@@ -552,6 +552,7 @@ mod tests {
         assert_eq!(coerce_to_f64(&json!([[[5]]])), Some(5f64));
         assert_eq!(coerce_to_f64(&json!([[[5], 6]])), None);
         assert_eq!(coerce_to_f64(&json!([[[1, 2]]])), None);
+        assert_eq!(coerce_to_f64(&json!(null)), Some(0f64));
         assert_eq!(coerce_to_f64(&json!(true)), Some(1f64));
         assert_eq!(coerce_to_f64(&json!([true])), None);
         assert_eq!(coerce_to_f64(&json!(false)), Some(0f64));

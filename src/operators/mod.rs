@@ -8,6 +8,7 @@ mod less_equal_than;
 mod less_than;
 mod logic;
 mod missing;
+mod missing_some;
 mod negation;
 mod not_equal;
 mod or;
@@ -61,6 +62,10 @@ pub enum Operator {
     /// Takes an array of data keys to search for (same format as `var`). Returns an array of any
     /// keys that are missing from the data object, or an empty array.
     Missing,
+    /// Takes a minimum number of data keys that are required, and an array of keys to search for
+    /// (same format as `var` or `missing`). Returns an empty array if the minimum is met, or an
+    /// array of the missing keys otherwise.
+    MissingSome,
 }
 
 impl Operator {
@@ -83,6 +88,7 @@ impl Operator {
             ">" => Some(Operator::GreaterThan),
             ">=" => Some(Operator::GreaterEqualThan),
             "missing" => Some(Operator::Missing),
+            "missing_some" => Some(Operator::MissingSome),
             _ => None,
         }
     }
@@ -104,6 +110,7 @@ impl Operator {
             Operator::GreaterThan => greater_than::compute(args),
             Operator::GreaterEqualThan => greater_equal_than::compute(args),
             Operator::Missing => missing::compute(args, data),
+            Operator::MissingSome => missing_some::compute(args, data),
         }
     }
 }
@@ -129,5 +136,9 @@ mod tests {
         assert_eq!(Operator::from_str(">"), Some(Operator::GreaterThan));
         assert_eq!(Operator::from_str(">="), Some(Operator::GreaterEqualThan));
         assert_eq!(Operator::from_str("missing"), Some(Operator::Missing));
+        assert_eq!(
+            Operator::from_str("missing_some"),
+            Some(Operator::MissingSome)
+        );
     }
 }
