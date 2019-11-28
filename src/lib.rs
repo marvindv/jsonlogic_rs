@@ -226,6 +226,48 @@ mod tests {
         }
     }
 
+    // missing_some
+    mod missing_some {
+        use super::*;
+
+        #[test]
+        fn test() {
+            assert_eq!(
+                apply(
+                    &json!({"missing_some":[1, ["a", "b", "c"]]}),
+                    &json!({"a":"apple"})
+                ),
+                Ok(json!([]))
+            );
+
+            assert_eq!(
+                apply(
+                    &json!({"missing_some":[2, ["a", "b", "c"]]}),
+                    &json!({"a":"apple"})
+                ),
+                Ok(json!(["b", "c"]))
+            );
+
+            // TODO(#6): add after merge is implemented
+            // assert_eq!(
+            //     apply(
+            //         &json!({"if" :[
+            //           {"merge": [
+            //             {"missing":["first_name", "last_name"]},
+            //             {"missing_some":[1, ["cell_phone", "home_phone"] ]}
+            //           ]},
+            //           "We require first name, last name, and one phone number.",
+            //           "OK to proceed"
+            //         ]}),
+            //         &json!({"first_name":"Bruce", "last_name":"Wayne"})
+            //     ),
+            //     Ok(json!(
+            //         "We require first name, last name, and one phone number."
+            //     ))
+            // );
+        }
+    }
+
     // !=
     mod not_equal {
         use super::*;
