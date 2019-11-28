@@ -25,7 +25,7 @@ assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 3 })), Ok(Value::Bool(false))
 
 * Accessing Data
     - `var` ✅
-    - `missing` ❌ [#4](https://github.com/marvindv/jsonlogic_rs/issues/4)
+    - `missing` ✅
     - `missing_some` ❌ [#4](https://github.com/marvindv/jsonlogic_rs/issues/4)
 * Logic and Boolean Operations ✅
     - `if` ✅

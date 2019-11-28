@@ -198,6 +198,34 @@ mod tests {
         }
     }
 
+    // missing
+    mod missing {
+        use super::*;
+
+        #[test]
+        fn test() {
+            assert_eq!(
+                apply(
+                    &json!({"missing":["a", "b", "6.foo.1", "6.foo.3"]}),
+                    &json!({"a":"apple", "c":"carrot", "6": {"foo": "bar"}})
+                ),
+                Ok(json!(["b", "6.foo.3"]))
+            );
+
+            assert_eq!(
+                apply(
+                    &json!({"if":[
+                      {"missing":["a", "b"]},
+                      "Not enough fruit",
+                      "OK to proceed"
+                    ]}),
+                    &json!({"a":"apple", "b":"banana"})
+                ),
+                Ok(json!("OK to proceed"))
+            );
+        }
+    }
+
     // !=
     mod not_equal {
         use super::*;
