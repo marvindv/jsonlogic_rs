@@ -7,6 +7,7 @@ mod if_else;
 mod less_equal_than;
 mod less_than;
 mod logic;
+mod min;
 mod missing;
 mod missing_some;
 mod negation;
@@ -66,6 +67,8 @@ pub enum Operator {
     /// (same format as `var` or `missing`). Returns an empty array if the minimum is met, or an
     /// array of the missing keys otherwise.
     MissingSome,
+    /// Return the minimum from a list of values. Matches the javascript `Math.min` implementation.
+    Min,
 }
 
 impl Operator {
@@ -89,6 +92,7 @@ impl Operator {
             ">=" => Some(Operator::GreaterEqualThan),
             "missing" => Some(Operator::Missing),
             "missing_some" => Some(Operator::MissingSome),
+            "min" => Some(Operator::Min),
             _ => None,
         }
     }
@@ -111,6 +115,7 @@ impl Operator {
             Operator::GreaterEqualThan => greater_equal_than::compute(args),
             Operator::Missing => missing::compute(args, data),
             Operator::MissingSome => missing_some::compute(args, data),
+            Operator::Min => min::compute(args),
         }
     }
 }
@@ -140,5 +145,6 @@ mod tests {
             Operator::from_str("missing_some"),
             Some(Operator::MissingSome)
         );
+        assert_eq!(Operator::from_str("min"), Some(Operator::Min));
     }
 }

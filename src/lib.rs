@@ -578,7 +578,7 @@ mod tests {
         use super::*;
 
         #[test]
-        fn test() {
+        fn compare() {
             // Only simple tests here, the hardcore coercion tests are in the logic.rs file.
             assert_eq!(apply(&json!({"<": []}), &Value::Null), Ok(json!(false)));
             assert_eq!(apply(&json!({"<": [1]}), &Value::Null), Ok(json!(false)));
@@ -595,6 +595,11 @@ mod tests {
                 apply(&json!({"<=": [3, 2]}), &Value::Null),
                 Ok(json!(false))
             );
+        }
+
+        #[test]
+        fn min() {
+            assert_eq!(apply(&json!({"min":[1,2,3]}), &Value::Null), Ok(json!(1.0)))
         }
     }
 }
