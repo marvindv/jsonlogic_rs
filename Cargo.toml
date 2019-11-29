@@ -6,7 +6,8 @@ edition = "2018"
 license = "MIT"
 description = "A JsonLogic implementation in Rust"
 repository = "https://github.com/marvindv/jsonlogic_rs"
-keywords = ["jsonlogic"]
+keywords = ["jsonlogic", "json", "logic", "rule"]
+categories = ["parser-implementations", "encoding"]
 readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
