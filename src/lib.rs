@@ -598,6 +598,22 @@ mod tests {
         }
 
         #[test]
+        fn between_exclusive() {
+            assert_eq!(
+                apply(&json!({"<" : [1, 2, 3]}), &Value::Null),
+                Ok(json!(true))
+            );
+            assert_eq!(
+                apply(&json!({"<" : [1, 1, 3]}), &Value::Null),
+                Ok(json!(false))
+            );
+            assert_eq!(
+                apply(&json!({"<" : [1, 4, 3]}), &Value::Null),
+                Ok(json!(false))
+            );
+        }
+
+        #[test]
         fn min() {
             assert_eq!(apply(&json!({"min":[1,2,3]}), &Value::Null), Ok(json!(1.0)));
         }
