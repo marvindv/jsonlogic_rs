@@ -39,8 +39,8 @@ assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 3 })), Ok(Value::Bool(false))
     - `and` ✅
 * Numeric Operations [#5](https://github.com/marvindv/jsonlogic_rs/issues/5)
     - `>`, `>=`, `<`, and `<=` ✅
-    - Between ❌
-    - `max` and `min` ❌
+    - Between ✅
+    - `max` and `min` ✅
     - Arithmetic, `+` `-` `*` `/` ❌
     - `%` ❌
 * Array Operations [#6](https://github.com/marvindv/jsonlogic_rs/issues/6)
