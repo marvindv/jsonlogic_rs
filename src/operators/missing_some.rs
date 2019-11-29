@@ -27,7 +27,7 @@ pub fn compute(args: &[Value], data: &Data) -> Value {
             return Value::Array(vec![]);
         }
 
-        if let Some(_) = data.get_value(arg) {
+        if data.get_value(arg).is_some() {
             min_num -= 1;
         } else {
             result.push(arg);

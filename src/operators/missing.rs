@@ -9,7 +9,7 @@ pub fn compute(args: &[Value], data: &Data) -> Value {
     for arg in args.iter() {
         // TODO: Even tough we only look for the existence, the value to the key will be cloned.
         // Something like Data::has_value without cloning would help.
-        if let None = data.get_value(arg) {
+        if data.get_value(arg).is_none() {
             result.push(arg.clone());
         }
     }
