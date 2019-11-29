@@ -7,6 +7,7 @@ mod if_else;
 mod less_equal_than;
 mod less_than;
 mod logic;
+mod max;
 mod min;
 mod missing;
 mod missing_some;
@@ -69,6 +70,8 @@ pub enum Operator {
     MissingSome,
     /// Return the minimum from a list of values. Matches the javascript `Math.min` implementation.
     Min,
+    /// Return the maximum from a list of values. Matches the javascript `Math.max` implementation.
+    Max,
 }
 
 impl Operator {
@@ -93,6 +96,7 @@ impl Operator {
             "missing" => Some(Operator::Missing),
             "missing_some" => Some(Operator::MissingSome),
             "min" => Some(Operator::Min),
+            "max" => Some(Operator::Max),
             _ => None,
         }
     }
@@ -116,6 +120,7 @@ impl Operator {
             Operator::Missing => missing::compute(args, data),
             Operator::MissingSome => missing_some::compute(args, data),
             Operator::Min => min::compute(args),
+            Operator::Max => max::compute(args),
         }
     }
 }
@@ -146,5 +151,6 @@ mod tests {
             Some(Operator::MissingSome)
         );
         assert_eq!(Operator::from_str("min"), Some(Operator::Min));
+        assert_eq!(Operator::from_str("max"), Some(Operator::Max));
     }
 }

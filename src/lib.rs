@@ -599,7 +599,15 @@ mod tests {
 
         #[test]
         fn min() {
-            assert_eq!(apply(&json!({"min":[1,2,3]}), &Value::Null), Ok(json!(1.0)))
+            assert_eq!(apply(&json!({"min":[1,2,3]}), &Value::Null), Ok(json!(1.0)));
+        }
+
+        #[test]
+        fn max() {
+            assert_eq!(
+                apply(&json!({"max":[1,"4",3]}), &Value::Null),
+                Ok(json!(4.0))
+            )
         }
     }
 }
