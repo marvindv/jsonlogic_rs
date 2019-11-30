@@ -1,4 +1,9 @@
-# jsonlogic_rs
+# jsonlogic_rs &emsp; [![Build Status]][github] [![Latest Version]][crates.io]
+
+[Build Status]: https://github.com/marvindv/jsonlogic_rs/workflows/build/badge.svg?branch=master
+[github]: https://github.com/marvindv/jsonlogic_rs
+[Latest Version]: https://img.shields.io/crates/v/jsonlogic.svg
+[crates.io]: https://crates.io/crates/jsonlogic
 
 **A [JsonLogic](http://jsonlogic.com/) implementation in Rust.**
 
