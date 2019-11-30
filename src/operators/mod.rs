@@ -13,6 +13,7 @@ mod max;
 mod min;
 mod missing;
 mod missing_some;
+mod modulo;
 mod multiplication;
 mod negation;
 mod not_equal;
@@ -86,6 +87,8 @@ pub enum Operator {
     Multiplication,
     /// /
     Division,
+    /// %, Finds the remainder after the first argument is divided by the second argument.
+    Modulo,
 }
 
 impl Operator {
@@ -115,6 +118,7 @@ impl Operator {
             "-" => Some(Operator::Subtraction),
             "*" => Some(Operator::Multiplication),
             "/" => Some(Operator::Division),
+            "%" => Some(Operator::Modulo),
             _ => None,
         }
     }
@@ -143,6 +147,7 @@ impl Operator {
             Operator::Subtraction => subtraction::compute(args),
             Operator::Multiplication => multiplication::compute(args),
             Operator::Division => division::compute(args),
+            Operator::Modulo => modulo::compute(args),
         }
     }
 }

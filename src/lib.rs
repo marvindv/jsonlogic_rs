@@ -685,5 +685,22 @@ mod tests {
                 Ok(json!(null))
             );
         }
+
+        #[test]
+        fn modulo() {
+            assert_eq!(apply(&json!({"%": [101, 2]}), &Value::Null), Ok(json!(1.0)));
+            assert_eq!(
+                apply(&json!({"%": [101, null]}), &Value::Null),
+                Ok(json!(null))
+            );
+            assert_eq!(
+                apply(&json!({"%": [101, 0]}), &Value::Null),
+                Ok(json!(null))
+            );
+            assert_eq!(
+                apply(&json!({"%": [null, 101]}), &Value::Null),
+                Ok(json!(0.0))
+            );
+        }
     }
 }
