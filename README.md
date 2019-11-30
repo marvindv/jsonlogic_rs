@@ -11,7 +11,7 @@ To use this library, add
 
 ```toml
 [dependencies]
-jsonlogic = "0.2"
+jsonlogic = "0.3"
 ```
 
 to your `Cargo.toml`.
@@ -42,12 +42,12 @@ assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 3 })), Ok(Value::Bool(false))
     - `!!` ✅
     - `or` ✅
     - `and` ✅
-* Numeric Operations [#5](https://github.com/marvindv/jsonlogic_rs/issues/5)
+* Numeric Operations
     - `>`, `>=`, `<`, and `<=` ✅
     - Between ✅
     - `max` and `min` ✅
-    - Arithmetic, `+` `-` `*` `/` ❌
-    - `%` ❌
+    - Arithmetic, `+` `-` `*` `/` ✅
+    - `%` ✅
 * Array Operations [#6](https://github.com/marvindv/jsonlogic_rs/issues/6)
     - `map`, `reduce` and `filter` ❌
     - `all`, `none` and `some` ❌
