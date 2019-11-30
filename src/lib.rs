@@ -652,5 +652,12 @@ mod tests {
             );
             assert_eq!(apply(&json!({"+" : "3.14"}), &Value::Null), Ok(json!(3.14)));
         }
+
+        #[test]
+        fn substraction() {
+            assert_eq!(apply(&json!({"-": [4,2]}), &Value::Null), Ok(json!(2.0)));
+            assert_eq!(apply(&json!({"-": [2]}), &Value::Null), Ok(json!(-2.0)));
+            assert_eq!(apply(&json!({"-": "-2"}), &Value::Null), Ok(json!(2.0)));
+        }
     }
 }

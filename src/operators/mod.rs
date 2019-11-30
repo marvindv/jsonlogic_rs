@@ -17,6 +17,7 @@ mod not_equal;
 mod or;
 mod strict_equality;
 mod strict_not_equal;
+mod subtraction;
 mod variable;
 
 use serde_json::Value;
@@ -77,6 +78,8 @@ pub enum Operator {
     /// it will be cast to a number. Returns `Value::Null` if one argument cannot be coerced into a
     /// number.
     Addition,
+    /// -, if just one argument is passed, it gets negated.
+    Subtraction,
 }
 
 impl Operator {
@@ -103,6 +106,7 @@ impl Operator {
             "min" => Some(Operator::Min),
             "max" => Some(Operator::Max),
             "+" => Some(Operator::Addition),
+            "-" => Some(Operator::Subtraction),
             _ => None,
         }
     }
@@ -128,6 +132,7 @@ impl Operator {
             Operator::Min => min::compute(args),
             Operator::Max => max::compute(args),
             Operator::Addition => addition::compute(args),
+            Operator::Subtraction => subtraction::compute(args),
         }
     }
 }
@@ -160,5 +165,6 @@ mod tests {
         assert_eq!(Operator::from_str("min"), Some(Operator::Min));
         assert_eq!(Operator::from_str("max"), Some(Operator::Max));
         assert_eq!(Operator::from_str("+"), Some(Operator::Addition));
+        assert_eq!(Operator::from_str("-"), Some(Operator::Subtraction));
     }
 }
