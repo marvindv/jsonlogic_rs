@@ -672,5 +672,18 @@ mod tests {
                 Ok(json!("3.14"))
             );
         }
+
+        #[test]
+        fn division() {
+            assert_eq!(apply(&json!({"/":[4, 2]}), &Value::Null), Ok(json!(2.0)));
+            // null/2 === 0/2 === 0
+            assert_eq!(apply(&json!({"/":[null, 2]}), &Value::Null), Ok(json!(0.0)));
+            assert_eq!(apply(&json!({"/":[4, 0]}), &Value::Null), Ok(json!(null)));
+            // 4/null === 4/0 === null
+            assert_eq!(
+                apply(&json!({"/":[4, null]}), &Value::Null),
+                Ok(json!(null))
+            );
+        }
     }
 }

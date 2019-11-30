@@ -1,5 +1,6 @@
 mod addition;
 mod and;
+mod division;
 mod double_negation;
 mod equality;
 mod greater_equal_than;
@@ -83,6 +84,8 @@ pub enum Operator {
     Subtraction,
     /// *, takes an arbitrary number of arguments and multiplicates them.
     Multiplication,
+    /// /
+    Division,
 }
 
 impl Operator {
@@ -111,6 +114,7 @@ impl Operator {
             "+" => Some(Operator::Addition),
             "-" => Some(Operator::Subtraction),
             "*" => Some(Operator::Multiplication),
+            "/" => Some(Operator::Division),
             _ => None,
         }
     }
@@ -138,6 +142,7 @@ impl Operator {
             Operator::Addition => addition::compute(args),
             Operator::Subtraction => subtraction::compute(args),
             Operator::Multiplication => multiplication::compute(args),
+            Operator::Division => division::compute(args),
         }
     }
 }
@@ -172,5 +177,6 @@ mod tests {
         assert_eq!(Operator::from_str("+"), Some(Operator::Addition));
         assert_eq!(Operator::from_str("-"), Some(Operator::Subtraction));
         assert_eq!(Operator::from_str("*"), Some(Operator::Multiplication));
+        assert_eq!(Operator::from_str("/"), Some(Operator::Division));
     }
 }
