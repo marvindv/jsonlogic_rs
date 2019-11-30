@@ -659,5 +659,18 @@ mod tests {
             assert_eq!(apply(&json!({"-": [2]}), &Value::Null), Ok(json!(-2.0)));
             assert_eq!(apply(&json!({"-": "-2"}), &Value::Null), Ok(json!(2.0)));
         }
+
+        #[test]
+        fn multiplication() {
+            assert_eq!(apply(&json!({"*":[4, 2]}), &Value::Null), Ok(json!(8.0)));
+            assert_eq!(
+                apply(&json!({"*":[2,2,2,2,2]}), &Value::Null),
+                Ok(json!(32.0))
+            );
+            assert_eq!(
+                apply(&json!({"*" : "3.14"}), &Value::Null),
+                Ok(json!("3.14"))
+            );
+        }
     }
 }

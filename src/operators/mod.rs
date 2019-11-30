@@ -12,6 +12,7 @@ mod max;
 mod min;
 mod missing;
 mod missing_some;
+mod multiplication;
 mod negation;
 mod not_equal;
 mod or;
@@ -80,6 +81,8 @@ pub enum Operator {
     Addition,
     /// -, if just one argument is passed, it gets negated.
     Subtraction,
+    /// *, takes an arbitrary number of arguments and multiplicates them.
+    Multiplication,
 }
 
 impl Operator {
@@ -107,6 +110,7 @@ impl Operator {
             "max" => Some(Operator::Max),
             "+" => Some(Operator::Addition),
             "-" => Some(Operator::Subtraction),
+            "*" => Some(Operator::Multiplication),
             _ => None,
         }
     }
@@ -133,6 +137,7 @@ impl Operator {
             Operator::Max => max::compute(args),
             Operator::Addition => addition::compute(args),
             Operator::Subtraction => subtraction::compute(args),
+            Operator::Multiplication => multiplication::compute(args),
         }
     }
 }
@@ -166,5 +171,6 @@ mod tests {
         assert_eq!(Operator::from_str("max"), Some(Operator::Max));
         assert_eq!(Operator::from_str("+"), Some(Operator::Addition));
         assert_eq!(Operator::from_str("-"), Some(Operator::Subtraction));
+        assert_eq!(Operator::from_str("*"), Some(Operator::Multiplication));
     }
 }
