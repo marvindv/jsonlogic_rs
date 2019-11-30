@@ -1,3 +1,4 @@
+mod addition;
 mod and;
 mod double_negation;
 mod equality;
@@ -72,6 +73,10 @@ pub enum Operator {
     Min,
     /// Return the maximum from a list of values. Matches the javascript `Math.max` implementation.
     Max,
+    /// +, takes an arbitrary number of arguments and sums them up. If just one argument is passed,
+    /// it will be cast to a number. Returns `Value::Null` if one argument cannot be coerced into a
+    /// number.
+    Addition,
 }
 
 impl Operator {
@@ -97,6 +102,7 @@ impl Operator {
             "missing_some" => Some(Operator::MissingSome),
             "min" => Some(Operator::Min),
             "max" => Some(Operator::Max),
+            "+" => Some(Operator::Addition),
             _ => None,
         }
     }
@@ -121,6 +127,7 @@ impl Operator {
             Operator::MissingSome => missing_some::compute(args, data),
             Operator::Min => min::compute(args),
             Operator::Max => max::compute(args),
+            Operator::Addition => addition::compute(args),
         }
     }
 }
@@ -152,5 +159,6 @@ mod tests {
         );
         assert_eq!(Operator::from_str("min"), Some(Operator::Min));
         assert_eq!(Operator::from_str("max"), Some(Operator::Max));
+        assert_eq!(Operator::from_str("+"), Some(Operator::Addition));
     }
 }

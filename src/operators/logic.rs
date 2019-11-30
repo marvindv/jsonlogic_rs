@@ -141,6 +141,52 @@ pub fn coerce_to_f64(val: &Value) -> Option<f64> {
     }
 }
 
+/// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseFloat
+/// parseFloat is a top-level function and not a method of any object.
+///     - If parseFloat encounters a character other than a plus sign (+), minus sign
+///       (- U+002D HYPHEN-MINUS), numeral (0–9), decimal point (.), or exponent (e or E), it
+///       returns the value up to that character, ignoring the invalid character and characters
+///       following it.
+///     - A second decimal point also stops parsing (characters up to that point will still be
+///       parsed).
+///     - Leading and trailing spaces in the argument are ignored.
+///     - If the argument’s first character can’t be converted to a number (it’s not any of the
+///       above characters), parseFloat returns NaN.
+///     - parseFloat can also parse and return Infinity.
+///     - parseFloat converts BigInt syntax to Numbers, losing precision. This happens because the
+///       trailing n character is discarded.
+///
+/// This function does not support BigInt syntax, since JSON does not support it.
+pub fn parse_float(val: &Value) -> Option<f64> {
+    match val {
+        Value::Number(num) => Some(num.as_f64().unwrap()),
+        Value::String(s) => {
+            let s = s.trim();
+            let mut end = 0;
+            // Keeping track of decimal point presence, since the parsing stops on a second one.
+            let mut has_decimal_point = false;
+            for ch in s.chars() {
+                match ch {
+                    '+' | '-' | '0'..='9' | 'e' | 'E' => end += 1,
+                    '.' => {
+                        if has_decimal_point {
+                            break;
+                        } else {
+                            end += 1;
+                            has_decimal_point = true;
+                        }
+                    }
+                    _ => break,
+                }
+            }
+
+            let parsed = &s[0..end];
+            parsed.parse::<f64>().ok()
+        }
+        _ => None,
+    }
+}
+
 #[allow(clippy::float_cmp)]
 fn equal_numbers(a: &Number, b: &Number) -> bool {
     // Avoid float compare if possible.
@@ -482,6 +528,36 @@ mod tests {
             is_less_than_null!(["-5"], true);
             is_less_than_null!([5], false);
             is_less_than_null!(["5"], false);
+        }
+    }
+
+    #[allow(clippy::approx_constant)]
+    mod parse_float {
+        use super::*;
+
+        #[test]
+        fn success() {
+            let result = Some(3.14);
+
+            assert_eq!(parse_float(&json!(3.14)), result);
+            assert_eq!(parse_float(&json!("3.14")), result);
+            assert_eq!(parse_float(&json!("3.14.5")), result);
+            assert_eq!(parse_float(&json!("  3.14  ")), result);
+            assert_eq!(parse_float(&json!("314e-2")), result);
+            assert_eq!(parse_float(&json!("0.0314E+2")), result);
+            assert_eq!(parse_float(&json!("0.0314e+2")), result);
+            assert_eq!(parse_float(&json!("3.14some non-digit characters")), result);
+        }
+
+        #[test]
+        fn nan() {
+            assert_eq!(parse_float(&json!("FF2")), None);
+        }
+
+        #[test]
+        fn sign() {
+            assert_eq!(parse_float(&json!("+3.14")), Some(3.14));
+            assert_eq!(parse_float(&json!("-3.14")), Some(-3.14));
         }
     }
 

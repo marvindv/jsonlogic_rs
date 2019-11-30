@@ -641,5 +641,16 @@ mod tests {
                 Ok(json!(4.0))
             )
         }
+
+        #[test]
+        #[allow(clippy::approx_constant)]
+        fn adddition() {
+            assert_eq!(apply(&json!({"+":[4, 2]}), &Value::Null), Ok(json!(6.0)));
+            assert_eq!(
+                apply(&json!({"+":[2,2,2,2,2]}), &Value::Null),
+                Ok(json!(10.0))
+            );
+            assert_eq!(apply(&json!({"+" : "3.14"}), &Value::Null), Ok(json!(3.14)));
+        }
     }
 }
