@@ -703,4 +703,22 @@ mod tests {
             );
         }
     }
+
+    mod string_operations {
+        use super::*;
+
+        // "in"
+        #[test]
+        fn is_substr() {
+            assert_eq!(
+                apply(&json!({"in":["Spring", "Springfield"]}), &Value::Null),
+                Ok(json!(true))
+            );
+
+            assert_eq!(
+                apply(&json!({"in":["spring", "Springfield"]}), &Value::Null),
+                Ok(json!(false))
+            );
+        }
+    }
 }

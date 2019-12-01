@@ -6,6 +6,7 @@ mod equality;
 mod greater_equal_than;
 mod greater_than;
 mod if_else;
+mod is_substr;
 mod less_equal_than;
 mod less_than;
 mod logic;
@@ -89,6 +90,9 @@ pub enum Operator {
     Division,
     /// %, Finds the remainder after the first argument is divided by the second argument.
     Modulo,
+    /// Expects two string arguments. Tests, whether the first argument is a substring of the
+    /// second argument.
+    In,
 }
 
 impl Operator {
@@ -119,6 +123,7 @@ impl Operator {
             "*" => Some(Operator::Multiplication),
             "/" => Some(Operator::Division),
             "%" => Some(Operator::Modulo),
+            "in" => Some(Operator::In),
             _ => None,
         }
     }
@@ -148,6 +153,7 @@ impl Operator {
             Operator::Multiplication => multiplication::compute(args),
             Operator::Division => division::compute(args),
             Operator::Modulo => modulo::compute(args),
+            Operator::In => is_substr::compute(args),
         }
     }
 }
@@ -183,5 +189,7 @@ mod tests {
         assert_eq!(Operator::from_str("-"), Some(Operator::Subtraction));
         assert_eq!(Operator::from_str("*"), Some(Operator::Multiplication));
         assert_eq!(Operator::from_str("/"), Some(Operator::Division));
+        assert_eq!(Operator::from_str("%"), Some(Operator::Modulo));
+        assert_eq!(Operator::from_str("in"), Some(Operator::In));
     }
 }

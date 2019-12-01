@@ -111,6 +111,18 @@ pub fn greater_equal_than(a: &Value, b: &Value) -> bool {
     !less_than(a, b)
 }
 
+/// The javascript operation `String(val)`.
+pub fn coerce_to_str(val: &Value) -> String {
+    match val {
+        Value::Array(arr) => arr_to_primitive_str(arr),
+        Value::Bool(b) => b.to_string(),
+        Value::Null => String::from("null"),
+        Value::Number(num) => num.to_string(),
+        Value::Object(_) => String::from("[object Object]"),
+        Value::String(s) => s.to_string(),
+    }
+}
+
 /// `Number(val)` in javascript or as named in the standard `ToNumber(val)`.
 pub fn coerce_to_f64(val: &Value) -> Option<f64> {
     match val {
@@ -196,18 +208,6 @@ fn equal_numbers(a: &Number, b: &Number) -> bool {
         a.as_i64().unwrap() == b.as_i64().unwrap()
     } else {
         a.as_f64().unwrap() == b.as_f64().unwrap()
-    }
-}
-
-/// The javascript operation `String(val)`.
-fn coerce_to_str(val: &Value) -> String {
-    match val {
-        Value::Array(arr) => arr_to_primitive_str(arr),
-        Value::Bool(b) => b.to_string(),
-        Value::Null => String::from("null"),
-        Value::Number(num) => num.to_string(),
-        Value::Object(_) => String::from("[object Object]"),
-        Value::String(s) => s.to_string(),
     }
 }
 
