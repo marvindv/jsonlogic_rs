@@ -1,5 +1,6 @@
 mod addition;
 mod and;
+mod cat;
 mod division;
 mod double_negation;
 mod equality;
@@ -93,6 +94,9 @@ pub enum Operator {
     /// Expects two string arguments. Tests, whether the first argument is a substring of the
     /// second argument.
     In,
+    /// Concatenate all the supplied arguments. Note that this is not a join or implode operation,
+    /// there is no "glue" string.
+    Cat,
 }
 
 impl Operator {
@@ -124,6 +128,7 @@ impl Operator {
             "/" => Some(Operator::Division),
             "%" => Some(Operator::Modulo),
             "in" => Some(Operator::In),
+            "cat" => Some(Operator::Cat),
             _ => None,
         }
     }
@@ -154,6 +159,7 @@ impl Operator {
             Operator::Division => division::compute(args),
             Operator::Modulo => modulo::compute(args),
             Operator::In => is_substr::compute(args),
+            Operator::Cat => cat::compute(args),
         }
     }
 }
@@ -162,6 +168,7 @@ impl Operator {
 mod tests {
     use super::*;
 
+    #[allow(clippy::cognitive_complexity)]
     #[test]
     fn from_str() {
         assert_eq!(Operator::from_str("=="), Some(Operator::Equal));
@@ -191,5 +198,6 @@ mod tests {
         assert_eq!(Operator::from_str("/"), Some(Operator::Division));
         assert_eq!(Operator::from_str("%"), Some(Operator::Modulo));
         assert_eq!(Operator::from_str("in"), Some(Operator::In));
+        assert_eq!(Operator::from_str("cat"), Some(Operator::Cat));
     }
 }

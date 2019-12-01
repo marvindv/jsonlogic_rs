@@ -55,7 +55,7 @@ assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 3 })), Ok(Value::Bool(false))
     - `in` ❌
 * String Operations [#7](https://github.com/marvindv/jsonlogic_rs/issues/7)
     - `in` ✅
-    - `cat` ❌
+    - `cat` ✅
     - `substr` ❌
 * Miscellaneous
     - `log` ❌ [#8](https://github.com/marvindv/jsonlogic_rs/issues/8)

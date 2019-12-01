@@ -720,5 +720,22 @@ mod tests {
                 Ok(json!(false))
             );
         }
+
+        // cat
+        #[test]
+        fn cat() {
+            assert_eq!(
+                apply(&json!({"cat": ["I love", " pie"]}), &Value::Null),
+                Ok(json!("I love pie"))
+            );
+
+            assert_eq!(
+                apply(
+                    &json!({"cat": ["I love ", {"var":"filling"}, " pie"]}),
+                    &json!({"filling":"apple", "temp":110})
+                ),
+                Ok(json!("I love apple pie"))
+            );
+        }
     }
 }
