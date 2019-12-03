@@ -22,6 +22,7 @@ mod not_equal;
 mod or;
 mod strict_equality;
 mod strict_not_equal;
+mod substr;
 mod subtraction;
 mod variable;
 
@@ -97,6 +98,17 @@ pub enum Operator {
     /// Concatenate all the supplied arguments. Note that this is not a join or implode operation,
     /// there is no "glue" string.
     Cat,
+    /// Gets a portion of a string. Takes two to three arguments.
+    ///
+    /// The first argument is a string. Any other value will be coerced into a string.
+    ///
+    /// The second argument is a number (or will be coerced to a number, default to 0) and is the
+    /// start position to return everything beginning at that index. Give a negative start position
+    /// to work from the end of the string and then return the rest.
+    ///
+    /// The third argument limits the length of the returned substring. Give a negative index to
+    /// stop that many characters before the end.
+    Substr,
 }
 
 impl Operator {
@@ -129,6 +141,7 @@ impl Operator {
             "%" => Some(Operator::Modulo),
             "in" => Some(Operator::In),
             "cat" => Some(Operator::Cat),
+            "substr" => Some(Operator::Substr),
             _ => None,
         }
     }
@@ -160,6 +173,7 @@ impl Operator {
             Operator::Modulo => modulo::compute(args),
             Operator::In => is_substr::compute(args),
             Operator::Cat => cat::compute(args),
+            Operator::Substr => substr::compute(args),
         }
     }
 }
@@ -199,5 +213,6 @@ mod tests {
         assert_eq!(Operator::from_str("%"), Some(Operator::Modulo));
         assert_eq!(Operator::from_str("in"), Some(Operator::In));
         assert_eq!(Operator::from_str("cat"), Some(Operator::Cat));
+        assert_eq!(Operator::from_str("substr"), Some(Operator::Substr));
     }
 }

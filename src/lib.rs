@@ -737,5 +737,26 @@ mod tests {
                 Ok(json!("I love apple pie"))
             );
         }
+
+        // substr
+        #[test]
+        fn substr() {
+            assert_eq!(
+                apply(&json!({"substr": ["jsonlogic", 4]}), &Value::Null),
+                Ok(json!("logic"))
+            );
+            assert_eq!(
+                apply(&json!({"substr": ["jsonlogic", -5]}), &Value::Null),
+                Ok(json!("logic"))
+            );
+            assert_eq!(
+                apply(&json!({"substr": ["jsonlogic", 1, 3]}), &Value::Null),
+                Ok(json!("son"))
+            );
+            assert_eq!(
+                apply(&json!({"substr": ["jsonlogic", 4, -2]}), &Value::Null),
+                Ok(json!("log"))
+            );
+        }
     }
 }
