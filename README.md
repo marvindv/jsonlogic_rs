@@ -52,7 +52,7 @@ assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 3 })), Ok(Value::Bool(false))
     - `map`, `reduce` and `filter` ❌
     - `all`, `none` and `some` ❌
     - `merge` ✅
-    - `in` ❌
+    - `in` ✅
 * String Operations
     - `in` ✅
     - `cat` ✅

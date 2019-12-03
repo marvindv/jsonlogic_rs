@@ -722,9 +722,9 @@ mod tests {
     mod string_operations {
         use super::*;
 
-        // "in"
+        // in
         #[test]
-        fn is_substr() {
+        fn is_in() {
             assert_eq!(
                 apply(&json!({"in":["Spring", "Springfield"]}), &Value::Null),
                 Ok(json!(true))
@@ -811,6 +811,17 @@ mod tests {
                     &json!({"financing":false})
                 ),
                 Ok(json!(["vin"]))
+            );
+        }
+
+        #[test]
+        fn is_in() {
+            assert_eq!(
+                apply(
+                    &json!({"in":[ "Ringo", ["John", "Paul", "George", "Ringo"] ]}),
+                    &Value::Null
+                ),
+                Ok(json!(true))
             );
         }
     }

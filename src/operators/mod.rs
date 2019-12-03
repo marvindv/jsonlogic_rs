@@ -7,7 +7,7 @@ mod equality;
 mod greater_equal_than;
 mod greater_than;
 mod if_else;
-mod is_substr;
+mod is_in;
 mod less_equal_than;
 mod less_than;
 mod log;
@@ -98,8 +98,11 @@ pub enum Operator {
     Division,
     /// %, Finds the remainder after the first argument is divided by the second argument.
     Modulo,
-    /// Expects two string arguments. Tests, whether the first argument is a substring of the
-    /// second argument.
+    /// Expects two arguments. Tests either for substring or whether an array contains an element.
+    ///
+    /// If the second argument is an array, tests that the first argument is a member of the array.
+    ///
+    /// If the second argument is a string, tests that the first argument is a substring.
     In,
     /// Concatenate all the supplied arguments. Note that this is not a join or implode operation,
     /// there is no "glue" string.
@@ -184,7 +187,7 @@ impl Operator {
             Operator::Multiplication => multiplication::compute(args),
             Operator::Division => division::compute(args),
             Operator::Modulo => modulo::compute(args),
-            Operator::In => is_substr::compute(args),
+            Operator::In => is_in::compute(args),
             Operator::Cat => cat::compute(args),
             Operator::Substr => substr::compute(args),
             Operator::Log => log::compute(args),
