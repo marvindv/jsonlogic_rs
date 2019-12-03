@@ -58,4 +58,4 @@ assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 3 })), Ok(Value::Bool(false))
     - `cat` ✅
     - `substr` ✅
 * Miscellaneous
-    - `log` ❌ [#8](https://github.com/marvindv/jsonlogic_rs/issues/8)
+    - `log` ✅

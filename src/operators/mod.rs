@@ -10,6 +10,7 @@ mod if_else;
 mod is_substr;
 mod less_equal_than;
 mod less_than;
+mod log;
 mod logic;
 mod max;
 mod min;
@@ -109,6 +110,8 @@ pub enum Operator {
     /// The third argument limits the length of the returned substring. Give a negative index to
     /// stop that many characters before the end.
     Substr,
+    /// Logs the first value to console, then passes it through unmodified.
+    Log,
 }
 
 impl Operator {
@@ -142,6 +145,7 @@ impl Operator {
             "in" => Some(Operator::In),
             "cat" => Some(Operator::Cat),
             "substr" => Some(Operator::Substr),
+            "log" => Some(Operator::Log),
             _ => None,
         }
     }
@@ -174,6 +178,7 @@ impl Operator {
             Operator::In => is_substr::compute(args),
             Operator::Cat => cat::compute(args),
             Operator::Substr => substr::compute(args),
+            Operator::Log => log::compute(args),
         }
     }
 }
@@ -214,5 +219,6 @@ mod tests {
         assert_eq!(Operator::from_str("in"), Some(Operator::In));
         assert_eq!(Operator::from_str("cat"), Some(Operator::Cat));
         assert_eq!(Operator::from_str("substr"), Some(Operator::Substr));
+        assert_eq!(Operator::from_str("log"), Some(Operator::Log));
     }
 }

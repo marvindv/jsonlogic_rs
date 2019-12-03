@@ -62,6 +62,22 @@ mod tests {
         assert_eq!(get_variable_names(&json_logic).unwrap(), names);
     }
 
+    #[test]
+    fn log() {
+        assert_eq!(
+            apply(&json!({ "log": "foo" }), &Value::Null),
+            Ok(json!("foo"))
+        );
+        assert_eq!(
+            apply(&json!({ "log": ["foo"] }), &Value::Null),
+            Ok(json!("foo"))
+        );
+        assert_eq!(
+            apply(&json!({ "log": ["foo", "bar"] }), &Value::Null),
+            Ok(json!("foo"))
+        );
+    }
+
     // ==
     mod equality {
         use super::*;
