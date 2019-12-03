@@ -70,8 +70,12 @@ pub enum Operator {
     GreaterThan,
     /// Greater or equal than. Takes exactly 2 arguments, otherwise returns `false`.
     GreaterEqualThan,
-    /// Takes an array of data keys to search for (same format as `var`). Returns an array of any
+    /// Takes an array of data keys to search for (same format as `var`).Returns an array of any
     /// keys that are missing from the data object, or an empty array.
+    ///
+    /// Can also receive 1 argument that is an array of keys, which typically happens if it's
+    /// actually acting on the output of another command (like 'if' or 'merge').
+    /// See https://github.com/jwadhams/json-logic-js/blob/a15f528919346f2ec7d82bd4fc91c41481546c01/logic.js#L145
     Missing,
     /// Takes a minimum number of data keys that are required, and an array of keys to search for
     /// (same format as `var` or `missing`). Returns an empty array if the minimum is met, or an
