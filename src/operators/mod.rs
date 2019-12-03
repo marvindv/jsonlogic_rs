@@ -13,6 +13,7 @@ mod less_than;
 mod log;
 mod logic;
 mod max;
+mod merge;
 mod min;
 mod missing;
 mod missing_some;
@@ -116,6 +117,9 @@ pub enum Operator {
     Substr,
     /// Logs the first value to console, then passes it through unmodified.
     Log,
+    /// Takes one or more arrays, and merges them into one array. If arguments aren’t arrays, they
+    /// get cast to arrays.
+    Merge,
 }
 
 impl Operator {
@@ -150,6 +154,7 @@ impl Operator {
             "cat" => Some(Operator::Cat),
             "substr" => Some(Operator::Substr),
             "log" => Some(Operator::Log),
+            "merge" => Some(Operator::Merge),
             _ => None,
         }
     }
@@ -183,6 +188,7 @@ impl Operator {
             Operator::Cat => cat::compute(args),
             Operator::Substr => substr::compute(args),
             Operator::Log => log::compute(args),
+            Operator::Merge => merge::compute(args),
         }
     }
 }
@@ -224,5 +230,6 @@ mod tests {
         assert_eq!(Operator::from_str("cat"), Some(Operator::Cat));
         assert_eq!(Operator::from_str("substr"), Some(Operator::Substr));
         assert_eq!(Operator::from_str("log"), Some(Operator::Log));
+        assert_eq!(Operator::from_str("merge"), Some(Operator::Merge));
     }
 }

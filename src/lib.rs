@@ -264,23 +264,22 @@ mod tests {
                 Ok(json!(["b", "c"]))
             );
 
-            // TODO(#6): add after merge is implemented
-            // assert_eq!(
-            //     apply(
-            //         &json!({"if" :[
-            //           {"merge": [
-            //             {"missing":["first_name", "last_name"]},
-            //             {"missing_some":[1, ["cell_phone", "home_phone"] ]}
-            //           ]},
-            //           "We require first name, last name, and one phone number.",
-            //           "OK to proceed"
-            //         ]}),
-            //         &json!({"first_name":"Bruce", "last_name":"Wayne"})
-            //     ),
-            //     Ok(json!(
-            //         "We require first name, last name, and one phone number."
-            //     ))
-            // );
+            assert_eq!(
+                apply(
+                    &json!({"if" :[
+                      {"merge": [
+                        {"missing":["first_name", "last_name"]},
+                        {"missing_some":[1, ["cell_phone", "home_phone"] ]}
+                      ]},
+                      "We require first name, last name, and one phone number.",
+                      "OK to proceed"
+                    ]}),
+                    &json!({"first_name":"Bruce", "last_name":"Wayne"})
+                ),
+                Ok(json!(
+                    "We require first name, last name, and one phone number."
+                ))
+            );
         }
     }
 
@@ -772,6 +771,46 @@ mod tests {
             assert_eq!(
                 apply(&json!({"substr": ["jsonlogic", 4, -2]}), &Value::Null),
                 Ok(json!("log"))
+            );
+        }
+    }
+
+    mod array_operations {
+        use super::*;
+
+        #[test]
+        fn merge() {
+            assert_eq!(
+                apply(&json!({"merge":[ [1,2], [3,4] ]}), &Value::Null),
+                Ok(json!([1, 2, 3, 4]))
+            );
+            assert_eq!(
+                apply(&json!({"merge":[ 1, 2, [3,4] ]}), &Value::Null),
+                Ok(json!([1, 2, 3, 4]))
+            );
+            assert_eq!(
+                apply(
+                    &json!({"missing" :
+                      { "merge" : [
+                        "vin",
+                        {"if": [{"var":"financing"}, ["apr", "term"], [] ]}
+                      ]}
+                    }),
+                    &json!({"financing":true})
+                ),
+                Ok(json!(["vin", "apr", "term"]))
+            );
+            assert_eq!(
+                apply(
+                    &json!({"missing" :
+                      { "merge" : [
+                        "vin",
+                        {"if": [{"var":"financing"}, ["apr", "term"], [] ]}
+                      ]}
+                    }),
+                    &json!({"financing":false})
+                ),
+                Ok(json!(["vin"]))
             );
         }
     }
