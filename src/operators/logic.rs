@@ -634,6 +634,8 @@ mod tests {
         assert_eq!(coerce_to_f64(&json!(false)), Some(0f64));
         assert_eq!(coerce_to_f64(&json!([false])), None);
         assert_eq!(coerce_to_f64(&json!("1")), Some(1f64));
+        assert_eq!(coerce_to_f64(&json!("1.1")), Some(1.1));
+        assert_eq!(coerce_to_f64(&json!("1.8")), Some(1.8));
         assert_eq!(coerce_to_f64(&json!(["1"])), Some(1f64));
         assert_eq!(coerce_to_f64(&json!(null)), Some(0f64));
         assert_eq!(coerce_to_f64(&json!([null])), Some(0f64));
