@@ -1,3 +1,5 @@
+mod test_helper;
+
 mod addition;
 mod and;
 mod cat;
@@ -30,6 +32,7 @@ mod variable;
 
 use serde_json::Value;
 
+use super::expression::Expression;
 use super::Data;
 
 /// Represents a JsonLogic operator.
@@ -162,37 +165,39 @@ impl Operator {
         }
     }
 
-    pub fn compute(self, args: &[Value], data: &Data) -> Value {
-        match self {
-            Operator::Equal => equality::compute(args),
-            Operator::NotEqual => not_equal::compute(args),
-            Operator::StrictEqual => strict_equality::compute(args),
-            Operator::StrictNotEqual => strict_not_equal::compute(args),
-            Operator::Negation => negation::compute(args),
-            Operator::DoubleNegation => double_negation::compute(args),
-            Operator::Variable => variable::compute(args, data),
-            Operator::If => if_else::compute(args),
-            Operator::Or => or::compute(args),
-            Operator::And => and::compute(args),
-            Operator::LessThan => less_than::compute(args),
-            Operator::LessEqualThan => less_equal_than::compute(args),
-            Operator::GreaterThan => greater_than::compute(args),
-            Operator::GreaterEqualThan => greater_equal_than::compute(args),
-            Operator::Missing => missing::compute(args, data),
-            Operator::MissingSome => missing_some::compute(args, data),
-            Operator::Min => min::compute(args),
-            Operator::Max => max::compute(args),
-            Operator::Addition => addition::compute(args),
-            Operator::Subtraction => subtraction::compute(args),
-            Operator::Multiplication => multiplication::compute(args),
-            Operator::Division => division::compute(args),
-            Operator::Modulo => modulo::compute(args),
-            Operator::In => is_in::compute(args),
-            Operator::Cat => cat::compute(args),
-            Operator::Substr => substr::compute(args),
-            Operator::Log => log::compute(args),
-            Operator::Merge => merge::compute(args),
-        }
+    pub fn compute(self, args: &[Expression], data: &Data) -> Value {
+        let compute_fn = match self {
+            Operator::Addition => addition::compute,
+            Operator::And => and::compute,
+            Operator::Cat => cat::compute,
+            Operator::Division => division::compute,
+            Operator::DoubleNegation => double_negation::compute,
+            Operator::Equal => equality::compute,
+            Operator::GreaterEqualThan => greater_equal_than::compute,
+            Operator::GreaterThan => greater_than::compute,
+            Operator::If => if_else::compute,
+            Operator::In => is_in::compute,
+            Operator::LessEqualThan => less_equal_than::compute,
+            Operator::LessThan => less_than::compute,
+            Operator::Log => log::compute,
+            Operator::Max => max::compute,
+            Operator::Merge => merge::compute,
+            Operator::Min => min::compute,
+            Operator::MissingSome => missing_some::compute,
+            Operator::Missing => missing::compute,
+            Operator::Modulo => modulo::compute,
+            Operator::Multiplication => multiplication::compute,
+            Operator::Negation => negation::compute,
+            Operator::NotEqual => not_equal::compute,
+            Operator::Or => or::compute,
+            Operator::StrictEqual => strict_equality::compute,
+            Operator::StrictNotEqual => strict_not_equal::compute,
+            Operator::Substr => substr::compute,
+            Operator::Subtraction => subtraction::compute,
+            Operator::Variable => variable::compute,
+        };
+
+        compute_fn(args, data)
     }
 }
 

@@ -19,7 +19,7 @@ impl<'a> Expression<'a> {
         // If this object has more than one key-value pair, we will return it as is. This replicates
         // the behaviour of the javascript implementation.
         if object.len() != 1 {
-            return Ok(Expression::Constant(&json));
+            return Ok(Expression::Constant(json));
         }
 
         let entry: Vec<(&String, &serde_json::Value)> = object.iter().collect();
@@ -42,11 +42,7 @@ impl<'a> Expression<'a> {
     pub fn compute(&self, data: &Data) -> Value {
         match self {
             Expression::Constant(value) => (*value).clone(),
-            Expression::Computed(operator, args) => {
-                // TODO: It would be awesome if the args would be lazy evaluated.
-                let args: Vec<Value> = args.iter().map(|arg| arg.compute(data)).collect();
-                operator.compute(&args, data)
-            }
+            Expression::Computed(operator, args) => operator.compute(args, data),
         }
     }
 
