@@ -12,11 +12,17 @@ pub fn compute(args: &[Expression], data: &Data) -> Value {
         return data.get_plain().clone();
     }
 
-    data.get_value(&arg).unwrap_or_else(|| {
-        args.get(1)
-            .map(|arg| arg.compute(data))
-            .unwrap_or(Value::Null)
-    })
+    match &arg {
+        // Return the whole data object if there is no argument given or the argument is an empty
+        // string.
+        Value::Null => data.get_plain().clone(),
+        Value::String(s) if s == "" => data.get_plain().clone(),
+        _ => data.get_value(&arg).unwrap_or_else(|| {
+            args.get(1)
+                .map(|arg| arg.compute(data))
+                .unwrap_or(Value::Null)
+        }),
+    }
 }
 
 #[cfg(test)]
@@ -44,6 +50,8 @@ mod tests {
         let data = Data::from_json(&data_json);
         assert_eq!(compute_const_with_data!(&[], &data), data_json);
         assert_eq!(compute_const_with_data!(&[Value::Null], &data), data_json);
+        assert_eq!(compute_const_with_data!(&[json!("")], &data), data_json);
+        assert_eq!(compute_const_with_data!(&[json!(" ")], &data), json!(null));
         assert_eq!(
             compute_const_with_data!(&[Value::Null, json!(123)], &data),
             data_json
@@ -127,6 +135,10 @@ mod tests {
         let data_json = json!({ "foo": { "bar": "baz" }});
         let data = Data::from_json(&data_json);
 
+        assert_eq!(
+            compute_const_with_data!(&[json!("foo.")], &data),
+            json!(null)
+        );
         assert_eq!(
             compute_const_with_data!(&[json!("foo.bar")], &data),
             json!("baz")

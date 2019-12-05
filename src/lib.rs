@@ -141,6 +141,11 @@ mod tests {
         #[test]
         fn simple() {
             assert_eq!(
+                apply(&json!({ "var": "" }), &json!({ "a": 12, "b": 24 })),
+                Ok(json!({ "a": 12, "b": 24 }))
+            );
+
+            assert_eq!(
                 apply(&json!({ "var": "a" }), &json!({ "a": 12, "b": 24 })),
                 Ok(json!(12))
             );
