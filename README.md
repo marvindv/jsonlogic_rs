@@ -11,7 +11,7 @@ To use this library, add
 
 ```toml
 [dependencies]
-jsonlogic = "0.4"
+jsonlogic = "0.5"
 ```
 
 to your `Cargo.toml`.
