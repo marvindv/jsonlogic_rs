@@ -49,7 +49,7 @@ assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 3 })), Ok(Value::Bool(false))
     - Arithmetic, `+` `-` `*` `/` ✅
     - `%` ✅
 * Array Operations [#6](https://github.com/marvindv/jsonlogic_rs/issues/6)
-    - `map`, `reduce` and `filter` ❌
+    - `map`, `reduce` and `filter` ✅
     - `all`, `none` and `some` ❌
     - `merge` ✅
     - `in` ✅

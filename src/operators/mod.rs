@@ -6,6 +6,7 @@ mod cat;
 mod division;
 mod double_negation;
 mod equality;
+mod filter;
 mod greater_equal_than;
 mod greater_than;
 mod if_else;
@@ -14,6 +15,7 @@ mod less_equal_than;
 mod less_than;
 mod log;
 mod logic;
+mod map;
 mod max;
 mod merge;
 mod min;
@@ -24,6 +26,7 @@ mod multiplication;
 mod negation;
 mod not_equal;
 mod or;
+mod reduce;
 mod strict_equality;
 mod strict_not_equal;
 mod substr;
@@ -126,6 +129,28 @@ pub enum Operator {
     /// Takes one or more arrays, and merges them into one array. If arguments aren’t arrays, they
     /// get cast to arrays.
     Merge,
+    /// You can use `map` to perform an action on every member of an array. Note, that inside the
+    /// logic being used to map, var operations are relative to the array element being worked on.
+    Map,
+    /// You can use `filter` to keep only elements of the array that pass a test. Note, that inside
+    /// the logic being used to map, var operations are relative to the array element being worked
+    /// on.
+    ///
+    /// Also note, the returned array will have contiguous indexes starting at zero (typical for
+    /// JavaScript, Python and Ruby) it will not preserve the source indexes (making it unlike
+    /// PHP’s array_filter).
+    Filter,
+    /// You can use `reduce` to combine all the elements in an array into a single value, like adding
+    /// up a list of numbers. Note, that inside the logic being used to reduce, var operations only
+    /// have access to an object like:
+    ///
+    /// ```ignore
+    /// {
+    ///     "current" : // this element of the array,
+    ///     "accumulator" : // progress so far, or the initial value
+    /// }
+    /// ```
+    Reduce,
 }
 
 impl Operator {
@@ -161,6 +186,9 @@ impl Operator {
             "substr" => Some(Operator::Substr),
             "log" => Some(Operator::Log),
             "merge" => Some(Operator::Merge),
+            "map" => Some(Operator::Map),
+            "filter" => Some(Operator::Filter),
+            "reduce" => Some(Operator::Reduce),
             _ => None,
         }
     }
@@ -173,6 +201,7 @@ impl Operator {
             Operator::Division => division::compute,
             Operator::DoubleNegation => double_negation::compute,
             Operator::Equal => equality::compute,
+            Operator::Filter => filter::compute,
             Operator::GreaterEqualThan => greater_equal_than::compute,
             Operator::GreaterThan => greater_than::compute,
             Operator::If => if_else::compute,
@@ -185,11 +214,13 @@ impl Operator {
             Operator::Min => min::compute,
             Operator::MissingSome => missing_some::compute,
             Operator::Missing => missing::compute,
+            Operator::Map => map::compute,
             Operator::Modulo => modulo::compute,
             Operator::Multiplication => multiplication::compute,
             Operator::Negation => negation::compute,
             Operator::NotEqual => not_equal::compute,
             Operator::Or => or::compute,
+            Operator::Reduce => reduce::compute,
             Operator::StrictEqual => strict_equality::compute,
             Operator::StrictNotEqual => strict_not_equal::compute,
             Operator::Substr => substr::compute,
@@ -239,5 +270,8 @@ mod tests {
         assert_eq!(Operator::from_str("substr"), Some(Operator::Substr));
         assert_eq!(Operator::from_str("log"), Some(Operator::Log));
         assert_eq!(Operator::from_str("merge"), Some(Operator::Merge));
+        assert_eq!(Operator::from_str("map"), Some(Operator::Map));
+        assert_eq!(Operator::from_str("filter"), Some(Operator::Filter));
+        assert_eq!(Operator::from_str("reduce"), Some(Operator::Reduce));
     }
 }

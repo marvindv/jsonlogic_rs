@@ -829,5 +829,87 @@ mod tests {
                 Ok(json!(true))
             );
         }
+
+        #[test]
+        fn map() {
+            let rule = json!({ "map": [
+              { "var": "integers"},
+              { "*": [{ "var": "" }, 2] }
+            ]});
+
+            assert_eq!(
+                apply(&rule, &json!({ "integers": [1, 2, 3, 4, 5] })),
+                Ok(json!([2.0, 4.0, 6.0, 8.0, 10.0]))
+            );
+            assert_eq!(
+                apply(&rule, &json!({ "_integers": [1, 2, 3, 4, 5] })),
+                Ok(json!([]))
+            );
+        }
+
+        #[test]
+        fn filter() {
+            let rule = json!({ "filter": [
+              { "var": "integers"},
+              { "%": [{ "var": "" }, 2] }
+            ]});
+
+            assert_eq!(
+                apply(&rule, &json!({ "integers": [1, 2, 3, 4, 5] })),
+                Ok(json!([1, 3, 5]))
+            );
+            assert_eq!(
+                apply(&rule, &json!({ "_integers": [1, 2, 3, 4, 5] })),
+                Ok(json!([]))
+            );
+
+            let rule = json!({ "filter": [
+              { "var": "integers"}
+            ]});
+            assert_eq!(
+                apply(&rule, &json!({ "integers": [1, 2, 3, 4, 5] })),
+                Ok(json!([]))
+            );
+        }
+
+        #[test]
+        fn reduce() {
+            let rule = json!({ "reduce": [
+                { "var": "integers" },
+                { "+": [{ "var": "current" }, { "var": "accumulator" }] },
+                0
+            ]});
+            assert_eq!(
+                apply(&rule, &json!({ "integers": [1, 2, 3, 4, 5] })),
+                Ok(json!(15.0))
+            );
+
+            // Return initial value if data is not an array.
+            let rule = json!({ "reduce": [
+                { "var": "integers" },
+                { "+": [{ "var": "current" }, { "var": "accumulator" }] },
+                0
+            ]});
+            assert_eq!(apply(&rule, &json!({ "integers": 5 })), Ok(json!(0)));
+
+            // Default for initial value should be null.
+            let rule = json!({ "reduce": [
+                { "var": "integers" },
+                { "+": [{ "var": "current" }, { "var": "accumulator" }] }
+            ]});
+            assert_eq!(
+                apply(&rule, &json!({ "integers": [1, 2, 3, 4, 5] })),
+                Ok(json!(null))
+            );
+
+            // Return null without reducer.
+            let rule = json!({ "reduce": [
+                { "var": "integers" }
+            ]});
+            assert_eq!(
+                apply(&rule, &json!({ "integers": [1, 2, 3, 4, 5] })),
+                Ok(json!(null))
+            );
+        }
     }
 }
