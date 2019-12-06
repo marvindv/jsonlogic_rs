@@ -17,9 +17,18 @@ use data::Data;
 /// ```
 /// use serde_json::{json, Value};
 ///
-/// let rule = json!({"===": [2, {"var": "foo"}]});
-/// assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 2 })), Ok(Value::Bool(true)));
-/// assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 3 })), Ok(Value::Bool(false)));
+/// let rule = json!({
+///     "===": [
+///         2,
+///         { "var": "foo" }
+///     ]
+/// });
+///
+/// let data = json!({ "foo": 2 });
+/// assert_eq!(jsonlogic::apply(&rule, &data), Ok(Value::Bool(true)));
+///
+/// let data = json!({ "foo": 3 });
+/// assert_eq!(jsonlogic::apply(&rule, &data), Ok(Value::Bool(false)));
 /// ```
 pub fn apply(json_logic: &Value, data: &Value) -> Result<Value, String> {
     let ast = expression::Expression::from_json(json_logic)?;

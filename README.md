@@ -21,10 +21,23 @@ to your `Cargo.toml`.
 ```rust
 use serde_json::{json, Value};
 
-let rule = json!({"===": [2, {"var": "foo"}]});
-assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 2 })), Ok(Value::Bool(true)));
-assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 3 })), Ok(Value::Bool(false)));
+let rule = json!({
+    "===": [
+        2,
+        { "var": "foo" }
+    ]
+});
+
+let data = json!({ "foo": 2 });
+assert_eq!(jsonlogic::apply(&rule, &data), Ok(Value::Bool(true)));
+
+let data = json!({ "foo": 3 });
+assert_eq!(jsonlogic::apply(&rule, &data), Ok(Value::Bool(false)));
 ```
+
+For detailed informations about all supported operations and their arguments, head over to
+[Supported Operations](http://jsonlogic.com/operations.html) on
+[jsonlogic.com](http://jsonlogic.com/).
 
 ## Operator Support
 
@@ -48,9 +61,9 @@ assert_eq!(jsonlogic::apply(&rule, &json!({ "foo": 3 })), Ok(Value::Bool(false))
     - `max` and `min` ✅
     - Arithmetic, `+` `-` `*` `/` ✅
     - `%` ✅
-* Array Operations [#6](https://github.com/marvindv/jsonlogic_rs/issues/6)
+* Array Operations
     - `map`, `reduce` and `filter` ✅
-    - `all`, `none` and `some` ❌
+    - `all`, `none` and `some` ✅
     - `merge` ✅
     - `in` ✅
 * String Operations
