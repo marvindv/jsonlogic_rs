@@ -1,6 +1,7 @@
 mod test_helper;
 
 mod addition;
+mod all;
 mod and;
 mod cat;
 mod division;
@@ -24,9 +25,11 @@ mod missing_some;
 mod modulo;
 mod multiplication;
 mod negation;
+mod none;
 mod not_equal;
 mod or;
 mod reduce;
+mod some;
 mod strict_equality;
 mod strict_not_equal;
 mod substr;
@@ -151,6 +154,25 @@ pub enum Operator {
     /// }
     /// ```
     Reduce,
+    /// Takes an array as the first argument and a condition as the second argument. Returns `true`
+    /// if the condition evaluates to a truthy value for each element of the first parameter.
+    ///
+    /// `var` operations inside the second argument expression are relative to the array element
+    /// being tested.
+    All,
+    /// Takes an array as the first argument and a condition as the second argument. Returns `true`
+    /// if the condition evaluates to a truthy value for at least one element of the first
+    /// parameter.
+    ///
+    /// `var` operations inside the second argument expression are relative to the array element
+    /// being tested.
+    Some,
+    /// Takes an array as the first argument and a condition as the second argument. Returns `true`
+    /// if the condition evaluates to a falsy value for each element of the first parameter.
+    ///
+    /// `var` operations inside the second argument expression are relative to the array element
+    /// being tested.
+    None,
 }
 
 impl Operator {
@@ -189,6 +211,9 @@ impl Operator {
             "map" => Some(Operator::Map),
             "filter" => Some(Operator::Filter),
             "reduce" => Some(Operator::Reduce),
+            "all" => Some(Operator::All),
+            "some" => Some(Operator::Some),
+            "none" => Some(Operator::None),
             _ => None,
         }
     }
@@ -196,6 +221,7 @@ impl Operator {
     pub fn compute(self, args: &[Expression], data: &Data) -> Value {
         let compute_fn = match self {
             Operator::Addition => addition::compute,
+            Operator::All => all::compute,
             Operator::And => and::compute,
             Operator::Cat => cat::compute,
             Operator::Division => division::compute,
@@ -218,9 +244,11 @@ impl Operator {
             Operator::Modulo => modulo::compute,
             Operator::Multiplication => multiplication::compute,
             Operator::Negation => negation::compute,
+            Operator::None => none::compute,
             Operator::NotEqual => not_equal::compute,
             Operator::Or => or::compute,
             Operator::Reduce => reduce::compute,
+            Operator::Some => some::compute,
             Operator::StrictEqual => strict_equality::compute,
             Operator::StrictNotEqual => strict_not_equal::compute,
             Operator::Substr => substr::compute,
@@ -273,5 +301,8 @@ mod tests {
         assert_eq!(Operator::from_str("map"), Some(Operator::Map));
         assert_eq!(Operator::from_str("filter"), Some(Operator::Filter));
         assert_eq!(Operator::from_str("reduce"), Some(Operator::Reduce));
+        assert_eq!(Operator::from_str("all"), Some(Operator::All));
+        assert_eq!(Operator::from_str("none"), Some(Operator::None));
+        assert_eq!(Operator::from_str("some"), Some(Operator::Some));
     }
 }

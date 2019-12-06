@@ -911,5 +911,142 @@ mod tests {
                 Ok(json!(null))
             );
         }
+
+        #[test]
+        fn all() {
+            let rule = json!({ "all": [[1, 2, 3], { ">": [{ "var": "" }, 0] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "all": [[1, 2, 3, -4], { "<": [{ "var": "" }, 0] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "all": [[1, 2, 3, "-4"], { "<": [{ "var": "" }, 0] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "all": [[], { "<": [{ "var": "" }, 0] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "all": [[1, 2, 3, -4], { ">": [{ "var": "" }, 0] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "all": [[1, 2, 3, -4], "foo"] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "all": [[1, 2, 3, -4], ""] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "all": [] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            // Should work on strings if the test operation works for chars, because of an
+            // implementation detail in the JavaScript implementation. The existence of the `length`
+            // property is checked on the input, not whether the input is actually an array.
+            let rule = json!({ "all": ["foo", "foo"] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "all": ["aaa", { "===": [{ "var": "" }, "a"] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "all": ["aba", { "===": [{ "var": "" }, "a"] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "all": ["bba", { "===": [{ "var": "" }, "a"] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "all": ["bbb", { "===": [{ "var": "" }, "a"] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+        }
+
+        #[test]
+        fn some() {
+            let rule = json!({ "some": [[-1, 0, 1], { ">": [{ "var": "" }, 0] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "some": [[-1, 0, "1"], { ">": [{ "var": "" }, 0] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "some": [[-1, 0, "1"], { ">": [{ "var": "" }, 1] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "some": [[], { ">": [{ "var": "" }, 1] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "some": [[]] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "some": [[-1, 0, "1"]] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "some": [] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "some": ["foo", { ">": [{ "var": "" }, 0] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "some": ["foo"] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            // Should not work on strings if the test operation works for chars.
+            let rule = json!({ "some": ["aaa", { "===": [{ "var": "" }, "a"] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "some": ["aba", { "===": [{ "var": "" }, "a"] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "some": ["bba", { "===": [{ "var": "" }, "a"] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+
+            let rule = json!({ "some": ["bbb", { "===": [{ "var": "" }, "a"] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(false)));
+        }
+
+        #[test]
+        fn some_complex() {
+            let rule = json!(
+                { "some": [{ "var": "pies" }, { "==": [{ "var": "filling" }, "apple"] }] }
+            );
+            let data = json!({
+                "pies":[
+                    { "filling": "pumpkin", "temp": 110 },
+                    { "filling": "rhubarb", "temp": 210 },
+                    { "filling": "apple", "temp": 310 }
+                ]}
+            );
+            assert_eq!(apply(&rule, &data), Ok(json!(true)));
+        }
+
+        #[test]
+        fn none() {
+            let rule = json!({ "none": [[-3, -2, -1], { ">": [{ "var": "" }, 0] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "none": [[-3, -2, -1]] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "none": [[], { ">": [{ "var": "" }, 0] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "none": [] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "none": ["foo"] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "none": ["foo", { ">": [{ "var": "" }, 0] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            // Should not work (i.e. return true) on strings if the test operation works for chars.
+            let rule = json!({ "none": ["aaa", { "===": [{ "var": "" }, "a"] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "none": ["aba", { "===": [{ "var": "" }, "a"] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "none": ["bba", { "===": [{ "var": "" }, "a"] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+
+            let rule = json!({ "none": ["bbb", { "===": [{ "var": "" }, "a"] }] });
+            assert_eq!(apply(&rule, &json!(null)), Ok(json!(true)));
+        }
     }
 }
