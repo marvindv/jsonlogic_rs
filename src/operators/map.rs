@@ -11,7 +11,7 @@ pub fn compute(args: &[Expression], data: &Data) -> Value {
     };
     let op = match args.get(1) {
         Some(expr) => expr,
-        None => &Expression::Constant(&Value::Null),
+        None => &Expression::Constant(Value::Null),
     };
 
     let mut result = Vec::with_capacity(arr.len());
@@ -46,8 +46,8 @@ mod tests {
         assert_eq!(
             compute(
                 &[
-                    Expression::from_json(&json!({ "var": "integers" }))?,
-                    Expression::from_json(&json!({ "*": [{ "var": "" }, 2]}))?,
+                    Expression::from_json(json!({ "var": "integers" }))?,
+                    Expression::from_json(json!({ "*": [{ "var": "" }, 2]}))?,
                 ],
                 &data,
             ),
@@ -57,8 +57,8 @@ mod tests {
         assert_eq!(
             compute(
                 &[
-                    Expression::from_json(&json!({ "var": "integerss" }))?,
-                    Expression::from_json(&json!({ "*": [{ "var": "" }, 2]}))?,
+                    Expression::from_json(json!({ "var": "integerss" }))?,
+                    Expression::from_json(json!({ "*": [{ "var": "" }, 2]}))?,
                 ],
                 &data,
             ),

@@ -4,6 +4,7 @@ mod data;
 mod expression;
 mod operators;
 
+use expression::Expression;
 use serde_json::Value;
 use std::collections::HashSet;
 
@@ -31,7 +32,7 @@ use data::Data;
 /// assert_eq!(jsonlogic::apply(&rule, &data), Ok(Value::Bool(false)));
 /// ```
 pub fn apply(json_logic: &Value, data: &Value) -> Result<Value, String> {
-    let ast = expression::Expression::from_json(json_logic)?;
+    let ast = Expression::from_json(json_logic.clone())?;
     let data = Data::from_json(data);
     Ok(ast.compute(&data))
 }
@@ -39,7 +40,7 @@ pub fn apply(json_logic: &Value, data: &Value) -> Result<Value, String> {
 // TODO: Add to public api when ready.
 #[allow(dead_code)]
 fn get_variable_names(json_logic: &Value) -> Result<HashSet<String>, String> {
-    let ast = expression::Expression::from_json(json_logic)?;
+    let ast = expression::Expression::from_json(json_logic.clone())?;
     ast.get_variable_names()
 }
 

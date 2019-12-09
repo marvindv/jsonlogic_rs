@@ -17,7 +17,7 @@ macro_rules! compute_const {
 
         let expressions: Vec<Expression> = args_vec
             .iter()
-            .map(|arg| Expression::Constant(&arg))
+            .map(|arg: &Value| Expression::Constant(arg.clone()))
             .collect();
         compute(&expressions, &Data::empty())
     }}
@@ -39,7 +39,7 @@ macro_rules! compute_const_with_data {
         let args: &[Value] = $args;
         let expressions: Vec<Expression> = args
             .iter()
-            .map(|ref arg| Expression::Constant(&arg))
+            .map(|arg| Expression::Constant(arg.clone()))
             .collect();
         compute(&expressions, $data)
     }};

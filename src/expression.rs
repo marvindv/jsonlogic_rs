@@ -4,15 +4,15 @@ use serde_json::Value;
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq)]
-pub enum Expression<'a> {
-    Constant(&'a Value),
-    Computed(Operator, Vec<Expression<'a>>),
+pub enum Expression {
+    Constant(Value),
+    Computed(Operator, Vec<Expression>),
 }
 
-impl<'a> Expression<'a> {
-    pub fn from_json(json: &Value) -> Result<Expression, String> {
+impl Expression {
+    pub fn from_json(json: Value) -> Result<Expression, String> {
         if !json.is_object() {
-            return Ok(Expression::Constant(&json));
+            return Ok(Expression::Constant(json));
         }
 
         let object = json.as_object().unwrap();
@@ -28,11 +28,14 @@ impl<'a> Expression<'a> {
             .ok_or_else(|| format!("Unrecognized operation {}", operator_key))?;
 
         let arguments: Vec<_> = match value {
-            Value::Array(arr) => arr.iter().map(|expr| Expression::from_json(expr)).collect(),
+            Value::Array(arr) => arr
+                .iter()
+                .map(|expr| Expression::from_json(expr.clone()))
+                .collect(),
             // Interpret as an empty array.
             Value::Null => Ok(vec![]),
             // If the value is not an array we can only assume that this is a shorthand.
-            _ => Expression::from_json(value).and_then(|expr| Ok(vec![expr])),
+            _ => Expression::from_json(value.clone()).and_then(|expr| Ok(vec![expr])),
         }?;
 
         Ok(Expression::Computed(operator, arguments))
@@ -41,7 +44,7 @@ impl<'a> Expression<'a> {
     /// Computes the expression and returns value it evaluates to.
     pub fn compute(&self, data: &Data) -> Value {
         match self {
-            Expression::Constant(value) => (*value).clone(),
+            Expression::Constant(value) => value.clone(),
             Expression::Computed(operator, args) => operator.compute(args, data),
         }
     }
@@ -100,48 +103,48 @@ mod tests {
     #[test]
     fn parse_to_ast() {
         assert_eq!(
-            Expression::from_json(&json!({ "==": null })).unwrap(),
+            Expression::from_json(json!({ "==": null })).unwrap(),
             Expression::Computed(Operator::Equal, vec![])
         );
 
         assert_eq!(
-            Expression::from_json(&json!({ "==": [] })).unwrap(),
+            Expression::from_json(json!({ "==": [] })).unwrap(),
             Expression::Computed(Operator::Equal, vec![])
         );
 
         assert_eq!(
-            Expression::from_json(&json!({ "==": [1] })).unwrap(),
-            Expression::Computed(Operator::Equal, vec![Constant(&json!(1))])
+            Expression::from_json(json!({ "==": [1] })).unwrap(),
+            Expression::Computed(Operator::Equal, vec![Constant(json!(1))])
         );
 
         assert_eq!(
-            Expression::from_json(&json!({ "==": [1, 2] })).unwrap(),
+            Expression::from_json(json!({ "==": [1, 2] })).unwrap(),
             Expression::Computed(
                 Operator::Equal,
-                vec![Constant(&json!(1)), Constant(&json!(2))]
+                vec![Constant(json!(1)), Constant(json!(2))]
             )
         );
 
         assert_eq!(
-            Expression::from_json(&json!({"!=": [5, 2]})).unwrap(),
+            Expression::from_json(json!({"!=": [5, 2]})).unwrap(),
             Expression::Computed(
                 Operator::NotEqual,
-                vec![Constant(&json!(5)), Constant(&json!(2))]
+                vec![Constant(json!(5)), Constant(json!(2))]
             )
         );
 
         assert_eq!(
-            Expression::from_json(&json!({"var": ["foo"]})).unwrap(),
-            Expression::Computed(Operator::Variable, vec![Constant(&json!("foo"))])
+            Expression::from_json(json!({"var": ["foo"]})).unwrap(),
+            Expression::Computed(Operator::Variable, vec![Constant(json!("foo"))])
         );
 
         assert_eq!(
-            Expression::from_json(&json!({"==": [{"var": ["foo"]}, "foo"]})).unwrap(),
+            Expression::from_json(json!({"==": [{"var": ["foo"]}, "foo"]})).unwrap(),
             Expression::Computed(
                 Operator::Equal,
                 vec![
-                    Expression::Computed(Operator::Variable, vec![Constant(&json!("foo"))]),
-                    Expression::Constant(&json!("foo"))
+                    Expression::Computed(Operator::Variable, vec![Constant(json!("foo"))]),
+                    Expression::Constant(json!("foo"))
                 ]
             )
         );
@@ -154,7 +157,7 @@ mod tests {
                 Operator::Variable,
                 vec![Expression::Computed(
                     Operator::Variable,
-                    vec![Expression::Constant(&json!("foo"))]
+                    vec![Expression::Constant(json!("foo"))]
                 )]
             )
             .get_variable_names(),
@@ -164,7 +167,7 @@ mod tests {
         );
 
         assert_eq!(
-            Expression::Computed(Operator::Variable, vec![Expression::Constant(&json!(1))])
+            Expression::Computed(Operator::Variable, vec![Expression::Constant(json!(1))])
                 .get_variable_names(),
             Err(String::from(
                 "found Variable operator with non string argument"
@@ -180,16 +183,13 @@ mod tests {
     #[test]
     fn get_variable_names() {
         assert_eq!(
-            Expression::Constant(&json!("foo")).get_variable_names(),
+            Expression::Constant(json!("foo")).get_variable_names(),
             Ok(HashSet::new())
         );
 
         assert_eq!(
-            Expression::Computed(
-                Operator::Variable,
-                vec![Expression::Constant(&json!("foo"))]
-            )
-            .get_variable_names(),
+            Expression::Computed(Operator::Variable, vec![Expression::Constant(json!("foo"))])
+                .get_variable_names(),
             Ok(["foo".to_owned()].iter().cloned().collect::<HashSet<_>>())
         );
 
@@ -197,10 +197,10 @@ mod tests {
             Expression::Computed(
                 Operator::Equal,
                 vec![
-                    Expression::Constant(&json!("a value")),
+                    Expression::Constant(json!("a value")),
                     Expression::Computed(
                         Operator::Variable,
-                        vec![Expression::Constant(&json!("foo"))]
+                        vec![Expression::Constant(json!("foo"))]
                     )
                 ]
             )
@@ -214,11 +214,11 @@ mod tests {
                 vec![
                     Expression::Computed(
                         Operator::Variable,
-                        vec![Expression::Constant(&json!("foo"))]
+                        vec![Expression::Constant(json!("foo"))]
                     ),
                     Expression::Computed(
                         Operator::Variable,
-                        vec![Expression::Constant(&json!("foo"))]
+                        vec![Expression::Constant(json!("foo"))]
                     )
                 ]
             )
@@ -232,11 +232,11 @@ mod tests {
                 vec![
                     Expression::Computed(
                         Operator::Variable,
-                        vec![Expression::Constant(&json!("bar"))]
+                        vec![Expression::Constant(json!("bar"))]
                     ),
                     Expression::Computed(
                         Operator::Variable,
-                        vec![Expression::Constant(&json!("foo"))]
+                        vec![Expression::Constant(json!("foo"))]
                     )
                 ]
             )
@@ -253,7 +253,7 @@ mod tests {
 
         #[test]
         fn constant_expression() {
-            assert_eq!(Constant(&json!(1)).compute(&Data::empty()), json!(1));
+            assert_eq!(Constant(json!(1)).compute(&Data::empty()), json!(1));
         }
 
         #[test]
@@ -263,13 +263,13 @@ mod tests {
                 json!(true)
             );
             assert_eq!(
-                Computed(Operator::Equal, vec![Constant(&json!(null))]).compute(&Data::empty()),
+                Computed(Operator::Equal, vec![Constant(json!(null))]).compute(&Data::empty()),
                 json!(true)
             );
             assert_eq!(
                 Computed(
                     Operator::Equal,
-                    vec![Constant(&json!(1)), Constant(&json!(1))]
+                    vec![Constant(json!(1)), Constant(json!(1))]
                 )
                 .compute(&Data::empty()),
                 json!(true)
@@ -277,7 +277,7 @@ mod tests {
             assert_eq!(
                 Computed(
                     Operator::Equal,
-                    vec![Constant(&json!(1)), Constant(&json!(2))]
+                    vec![Constant(json!(1)), Constant(json!(2))]
                 )
                 .compute(&Data::empty()),
                 json!(false)

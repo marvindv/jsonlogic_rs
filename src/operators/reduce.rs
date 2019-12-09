@@ -23,7 +23,7 @@ pub fn compute(args: &[Expression], data: &Data) -> Value {
     };
     let reducer = match args.get(1) {
         Some(expr) => expr,
-        None => &Expression::Constant(&Value::Null),
+        None => &Expression::Constant(Value::Null),
     };
 
     let mut accumulator = initial;
