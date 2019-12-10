@@ -1,7 +1,52 @@
+use crate::errors::{JsonLogicError, JsonLogicResult};
 use crate::operators::Operator;
 use crate::Data;
 use serde_json::Value;
 use std::collections::HashSet;
+use wasm_bindgen::prelude::*;
+
+/// Represents the Abstract Syntax Tree specified by a JsonLogic rule.
+#[wasm_bindgen]
+#[derive(Debug, PartialEq)]
+pub struct Rule {
+    root: Expression,
+}
+
+impl Rule {
+    pub fn compile(json_logic: Value) -> JsonLogicResult<Rule> {
+        let expr = Expression::from_json(json_logic)?;
+        Ok(Rule { root: expr })
+    }
+
+    pub fn apply(&self, data: &Value) -> Value {
+        self.root.compute(&Data::from_json(data))
+    }
+}
+
+#[wasm_bindgen]
+impl Rule {
+    #[wasm_bindgen(js_name = compile)]
+    pub fn compile_js(json_logic: &JsValue) -> Result<Rule, JsValue> {
+        let rule = js_to_serde(json_logic)?;
+        Self::compile(rule).map_err(|err| err.into())
+    }
+
+    #[wasm_bindgen(js_name = apply)]
+    pub fn apply_js(&self, data: &JsValue) -> Result<JsValue, JsValue> {
+        let data = js_to_serde(data)?;
+        let data = Data::from_json(&data);
+        let result = self.root.compute(&data);
+        serde_to_js(&result).map_err(|err| err.into())
+    }
+}
+
+fn js_to_serde(js: &JsValue) -> JsonLogicResult<Value> {
+    js.into_serde().map_err(|err| err.into())
+}
+
+fn serde_to_js(serde: &Value) -> JsonLogicResult<JsValue> {
+    JsValue::from_serde(serde).map_err(|err| err.into())
+}
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
@@ -10,7 +55,7 @@ pub enum Expression {
 }
 
 impl Expression {
-    pub fn from_json(json: Value) -> Result<Expression, String> {
+    pub fn from_json(json: Value) -> JsonLogicResult<Expression> {
         if !json.is_object() {
             return Ok(Expression::Constant(json));
         }
@@ -25,7 +70,7 @@ impl Expression {
         let entry: Vec<(&String, &serde_json::Value)> = object.iter().collect();
         let &(operator_key, value) = entry.get(0).unwrap();
         let operator = Operator::from_str(operator_key)
-            .ok_or_else(|| format!("Unrecognized operation {}", operator_key))?;
+            .ok_or_else(|| JsonLogicError::UnknownOperator(operator_key.to_owned()))?;
 
         let arguments: Vec<_> = match value {
             Value::Array(arr) => arr
@@ -57,6 +102,7 @@ impl Expression {
     ///
     /// While the latter is valid for computation, it is currently not implemented to analyze the
     /// variable name for that.
+    #[allow(dead_code)]
     pub fn get_variable_names(&self) -> Result<HashSet<String>, String> {
         let mut variable_names: HashSet<String> = HashSet::new();
 

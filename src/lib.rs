@@ -1,12 +1,21 @@
+// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
+// allocator.
+#[cfg(feature = "wee_alloc")]
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
 extern crate serde_json;
+extern crate web_sys;
 
 mod data;
+mod errors;
 mod expression;
 mod operators;
+mod utils;
 
-use expression::Expression;
+use expression::Rule;
 use serde_json::Value;
-use std::collections::HashSet;
+use wasm_bindgen::prelude::*;
 
 use data::Data;
 
@@ -32,14 +41,12 @@ use data::Data;
 /// assert_eq!(jsonlogic::apply(&rule, &data), Ok(Value::Bool(false)));
 /// ```
 pub fn apply(json_logic: &Value, data: &Value) -> Result<Value, String> {
-    let ast = Expression::from_json(json_logic.clone())?;
-    let data = Data::from_json(data);
-    Ok(ast.compute(&data))
+    let rule = Rule::compile(json_logic.clone())?;
+    Ok(rule.apply(data))
 }
 
-// TODO: Add to public api when ready.
-#[allow(dead_code)]
-fn get_variable_names(json_logic: &Value) -> Result<HashSet<String>, String> {
-    let ast = expression::Expression::from_json(json_logic.clone())?;
-    ast.get_variable_names()
+#[wasm_bindgen(js_name = apply)]
+pub fn apply_js(json_logic: &JsValue, data: &JsValue) -> Result<JsValue, JsValue> {
+    let ast = Rule::compile_js(json_logic)?;
+    ast.apply_js(data)
 }
