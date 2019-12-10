@@ -17,7 +17,7 @@ impl<'a> Data<'a> {
     }
 
     /// Gets the plain json data that is encapsulated by this struct.
-    pub fn get_plain(&self) -> &Value {
+    pub fn plain(&self) -> &Value {
         self.0
     }
 

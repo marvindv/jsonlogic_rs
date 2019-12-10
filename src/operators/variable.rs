@@ -9,14 +9,14 @@ pub fn compute(args: &[Expression], data: &Data) -> Value {
         .unwrap_or(Value::Null);
 
     if arg.is_null() {
-        return data.get_plain().clone();
+        return data.plain().clone();
     }
 
     match &arg {
         // Return the whole data object if there is no argument given or the argument is an empty
         // string.
-        Value::Null => data.get_plain().clone(),
-        Value::String(s) if s == "" => data.get_plain().clone(),
+        Value::Null => data.plain().clone(),
+        Value::String(s) if s == "" => data.plain().clone(),
         _ => data.get_value(&arg).unwrap_or_else(|| {
             args.get(1)
                 .map(|arg| arg.compute(data))
