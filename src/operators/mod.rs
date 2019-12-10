@@ -42,7 +42,7 @@ use super::expression::Expression;
 use super::Data;
 
 /// Represents a JsonLogic operator.
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum Operator {
     /// Tests abstract equality as specified in
     /// https://www.ecma-international.org/ecma-262/#sec-abstract-equality-comparison, with type
