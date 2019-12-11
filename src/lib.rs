@@ -47,6 +47,7 @@ pub fn apply(json_logic: &Value, data: &Value) -> Result<Value, String> {
 
 #[wasm_bindgen(js_name = apply)]
 pub fn apply_js(json_logic: &JsValue, data: &JsValue) -> Result<JsValue, JsValue> {
+    utils::set_panic_hook();
     let ast = Rule::compile_js(json_logic)?;
     ast.apply_js(data)
 }

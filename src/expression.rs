@@ -1,5 +1,6 @@
 use crate::errors::{JsonLogicError, JsonLogicResult};
 use crate::operators::Operator;
+use crate::utils;
 use crate::Data;
 use serde_json::Value;
 use std::collections::HashSet;
@@ -14,6 +15,7 @@ pub struct Rule {
 
 impl Rule {
     pub fn compile(json_logic: Value) -> JsonLogicResult<Rule> {
+        utils::set_panic_hook();
         let expr = Expression::from_json(json_logic)?;
         Ok(Rule { root: expr })
     }
