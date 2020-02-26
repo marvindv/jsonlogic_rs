@@ -245,6 +245,52 @@ mod strict_not_equal {
     }
 }
 
+#[test]
+fn negation() {
+    assert_eq!(
+        apply(
+            &json!({
+                "!": [true]
+            }),
+            &Value::Null
+        ),
+        Ok(Value::Bool(false))
+    );
+
+    assert_eq!(
+        apply(
+            &json!({
+                "!": true
+            }),
+            &Value::Null
+        ),
+        Ok(Value::Bool(false))
+    );
+}
+
+#[test]
+fn double_negation() {
+    assert_eq!(
+        apply(
+            &json!({
+                "!!": [[]]
+            }),
+            &Value::Null
+        ),
+        Ok(Value::Bool(false))
+    );
+
+    assert_eq!(
+        apply(
+            &json!({
+                "!!": ["0"]
+            }),
+            &Value::Null
+        ),
+        Ok(Value::Bool(true))
+    );
+}
+
 mod or {
     use super::*;
 
