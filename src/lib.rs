@@ -50,18 +50,6 @@ mod tests {
     use std::collections::HashSet;
 
     #[test]
-    fn simple_values() {
-        let num = json!(1);
-        assert_eq!(apply(&num, &Value::Null), Ok(num));
-
-        let string = json!("foo");
-        assert_eq!(apply(&string, &Value::Null), Ok(string));
-
-        let boolean = json!(true);
-        assert_eq!(apply(&boolean, &Value::Null), Ok(boolean));
-    }
-
-    #[test]
     fn var_names() {
         let json_logic = json!({ "!==": [{ "var": "foo" }, { "var": ["bar", 5] }] });
         let names: HashSet<_> = [String::from("foo"), String::from("bar")]
