@@ -35,13 +35,14 @@ let data = json!({ "foo": 3 });
 assert_eq!(jsonlogic::apply(&rule, &data), Ok(Value::Bool(false)));
 ```
 
-For detailed informations about all supported operations and their arguments, head over to
-[Supported Operations](http://jsonlogic.com/operations.html) on
-[jsonlogic.com](http://jsonlogic.com/).
+See the [`examples`](https://github.com/marvindv/jsonlogic_rs/tree/master/examples) directory for more usage examples.
 
 ## Operations
 
-**jsonlogic_rs** supports all [JsonLogic](http://jsonlogic.com/operations.html) operations. For Rust usage examples and edge cases have a look at the linked tests of each operator below.
+**jsonlogic_rs** supports all JsonLogic operations. For detailed informations about all operations and their arguments, head over to [Supported Operations](http://jsonlogic.com/operations.html) on
+[jsonlogic.com](http://jsonlogic.com/).
+
+For Rust usage examples and edge cases have a look at the linked tests for each operator below.
 
 * Accessing Data
     - [`var`](https://github.com/marvindv/jsonlogic_rs/blob/master/tests/data_access.rs#L4)
